@@ -12,3 +12,10 @@
 .news-message{white-space:pre-wrap;line-height:1.6;margin:0;max-height:12rem;overflow:auto}
 .news-older summary{cursor:pointer;padding:12px 0;font-weight:600}
 @media(max-width:600px){#league-news{padding:16px}.news-heading{display:block}.news-heading .sub{display:block;margin-top:5px}}
+
+.course-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:20px}
+.course-entry{min-width:0;overflow-wrap:anywhere}
+.course-entry h3{margin:12px 0 6px;font-size:1.4rem}
+.course-description{white-space:pre-wrap;line-height:1.65}
+.course-entry dl{margin:18px 0}.course-entry dl div{display:flex;gap:14px;padding:7px 0;border-top:1px solid #d6dfd5}
+.course-entry dt{font-weight:600;flex:0 0 90px}.course-entry dd{margin:0}

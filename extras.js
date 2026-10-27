@@ -53,13 +53,13 @@ function weekDraft(d,week){
  const difficulty=expectations.length>=minimum?Math.max(-3,Math.min(3,median(expectations.map(r=>r.raw-r.expected)))):0;
  return {week:+week,difficulty,field:expectations.length,reason:expectations.length>=minimum?'Median deviation, capped at ±3':'Fewer than '+minimum+' reliable expectations: adjustment is zero',rounds:eligible};
 }
-function awards(d){
- const rr=individualRounds(d).filter(r=>r.net!==null),c=config(d),finished=yes(c.seasonClosed)&&d.Weeks.filter(w=>w.format!=='SCRAMBLE').every(w=>rr.filter(r=>r.week===+w.week).length===16);
+function awards(d,project=false){
+ const rr=individualRounds(d).filter(r=>r.net!==null),c=config(d),finished=project||yes(c.seasonClosed)&&d.Weeks.filter(w=>w.format!=='SCRAMBLE').every(w=>rr.filter(r=>r.week===+w.week).length===16);
  const players=d.Players.map(p=>({...p,rounds:rr.filter(r=>r.player===p.id)}));
- const max=Math.max(0,...players.map(p=>p.rounds.length));const required=finished&&max<10?9:10;
- const pending=finished&&max<9;
+ const max=Math.max(0,...players.map(p=>p.rounds.length));const required=finished&&!project&&max<10?9:10;
+ const pending=finished&&!project&&max<9;
  const make=(metric,ascending,potKey)=>{
-  const rows=players.map(p=>{const kept=[...p.rounds].sort((a,b)=>ascending?a[metric]-b[metric]||a.week-b.week:b[metric]-a[metric]||a.week-b.week).slice(0,required);return {...p,kept,total:sum(kept.map(r=>r[metric])),qualified:p.rounds.length>=required,place:null,prize:null};});
+  const rows=players.map(p=>{const kept=[...p.rounds].sort((a,b)=>ascending?a[metric]-b[metric]||a.week-b.week:b[metric]-a[metric]||a.week-b.week).slice(0,required);return {...p,kept,total:sum(kept.map(r=>r[metric])),qualified:project?p.rounds.length>0:p.rounds.length>=required,place:null,prize:null};});
   rows.sort((a,b)=>Number(b.qualified)-Number(a.qualified)||(ascending?a.total-b.total:b.total-a.total)||a.name.localeCompare(b.name));
   let position=0,prior=null,place=0;for(const p of rows){if(!p.qualified)continue;position++;if(prior!==p.total)place=position;p.place=place;prior=p.total;}
   const defaults=[80,70,60,50,40],payouts=defaults.map((v,i)=>c[potKey+(i+1)]===undefined?v:number(c[potKey+(i+1)]));
@@ -95,6 +95,7 @@ function awards(d){
   }
  }
 
+ if(!finished){const projection=awards(d,true);for(const key of ['net','stableford']){for(const p of (key==='net'?net:stableford).rows){const q=projection[key].rows.find(q=>q.id===p.id);p.projectedPrize=q.prize;p.projectedPlace=q.place;p.projectedExcluded=!!q.excluded;p.projectedKeptAward=q.keptAward;}}}
  return {required,finished,pending,net,stableford,decisions,awaitingChoice,payoutPending,unawarded};
 }
 

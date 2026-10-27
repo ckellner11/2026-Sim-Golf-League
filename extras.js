@@ -23,7 +23,7 @@ function handicaps(d){
   applyOverrides(0);
   for(const w of weeks){
    const rr=own.filter(h=>+h.season!==2025&&+h.week===+w.week).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-   for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-6);const calc=index(window.map(x=>x.adjusted));const target=Number.isFinite(zero)?Math.max(0,Math.round(Math.max(0,calc.base-zero)*.95)):null;
+   for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-6);const calc=index(window.map(x=>x.adjusted));const target=Number.isFinite(zero)?Math.max(0,Math.round(Math.max(0,calc.base-zero)*.90)):null;
     const frozen=+h.week>10&&!yes(c.resumePlayoffUpdates);const before=current;
     if(approved&&hasInitial&&target!==null&&!frozen)current=Math.max(0,Math.min(before+1,Math.max(before-2,target)));
     steps.push({type:'round',id:h.id,week:+h.week,raw:+h.raw,difficulty:+h.difficulty,adjusted,...calc,target,before,after:current,frozen,revision:+h.revision});

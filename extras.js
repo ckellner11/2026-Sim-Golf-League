@@ -62,31 +62,39 @@ function awards(d){
   const rows=players.map(p=>{const kept=[...p.rounds].sort((a,b)=>ascending?a[metric]-b[metric]||a.week-b.week:b[metric]-a[metric]||a.week-b.week).slice(0,required);return {...p,kept,total:sum(kept.map(r=>r[metric])),qualified:p.rounds.length>=required,place:null,prize:null};});
   rows.sort((a,b)=>Number(b.qualified)-Number(a.qualified)||(ascending?a.total-b.total:b.total-a.total)||a.name.localeCompare(b.name));
   let position=0,prior=null,place=0;for(const p of rows){if(!p.qualified)continue;position++;if(prior!==p.total)place=position;p.place=place;prior=p.total;}
-  const pot=number(c[potKey]);
-  return {rows,pot:Number.isFinite(pot)&&pot>=0?pot:null};
+  const defaults=[80,70,60,50,40],payouts=defaults.map((v,i)=>c[potKey+(i+1)]===undefined?v:number(c[potKey+(i+1)]));
+  const valid=payouts.every(v=>Number.isFinite(v)&&v>=0);
+  return {rows,payouts,pot:valid?sum(payouts):null,unallocated:0};
  };
  const net=make('net',true,'netPrize'),stableford=make('stableford',false,'stablefordPrize');
  const decisions=[],awaitingChoice=[],unawarded=[];let payoutPending=false;
- function leaders(board){const eligible=board.rows.filter(p=>p.qualified&&!p.excluded);if(!eligible.length)return [];const best=eligible[0].total;return eligible.filter(p=>p.total===best);}
- // Resolve overlaps in rounds, comparing actual split payouts before each round.
- // Exclusions persist during this calculation; pass-downs can expose another overlap.
+ function allocate(board){
+  board.rows.forEach(p=>{p.place=null;p.prize=null;});
+  const eligible=board.rows.filter(p=>p.qualified&&!p.excluded);
+  for(let i=0;i<eligible.length;){let j=i+1;while(j<eligible.length&&eligible[j].total===eligible[i].total)j++;
+   const cash=sum(board.payouts.slice(i,j))/(j-i);
+   for(let k=i;k<j;k++){eligible[k].place=i+1;eligible[k].prize=cash>0?cash:null;}
+   i=j;
+  }
+  board.unallocated=sum(board.payouts.slice(eligible.length));
+ }
+ // Compare actual payouts (including tied splits), then pass excluded places down.
  if(finished&&!pending){
   if(net.pot===null||stableford.pot===null)payoutPending=true;
   else {
    for(let pass=0;pass<=players.length;pass++){
-    const nw=net.pot>0?leaders(net):[],sw=stableford.pot>0?leaders(stableford):[];
-    const overlap=nw.filter(n=>sw.some(s=>s.id===n.id));if(!overlap.length)break;
-    const np=net.pot/nw.length,sp=stableford.pot/sw.length;
-    const equal=Math.abs(np-sp)<1e-9;
-    for(const p of overlap){const keep=np>=sp?'net':'stableford';const excluded=(keep==='net'?stableford:net).rows.find(r=>r.id===p.id);excluded.excluded=true;excluded.keptAward=keep;decisions.push({player:p.id,keep,netAmount:np,stablefordAmount:sp,equalPayout:equal});}
+    allocate(net);allocate(stableford);
+    const overlap=net.rows.filter(n=>n.prize>0&&stableford.rows.some(s=>s.id===n.id&&s.prize>0));
+    if(!overlap.length)break;
+    for(const p of overlap){const np=p.prize,sp=stableford.rows.find(s=>s.id===p.id).prize,equal=Math.abs(np-sp)<1e-9,keep=equal||np>sp?'net':'stableford';
+     const excluded=(keep==='net'?stableford:net).rows.find(r=>r.id===p.id);excluded.excluded=true;excluded.keptAward=keep;
+     decisions.push({player:p.id,keep,netAmount:np,stablefordAmount:sp,equalPayout:equal});
+    }
    }
-   if(!payoutPending){for(const [key,board] of [['net',net],['stableford',stableford]]){
-    let position=0,prior=null,place=0;for(const p of board.rows){p.place=null;if(!p.qualified||p.excluded)continue;position++;if(prior!==p.total)place=position;p.place=place;prior=p.total;}
-    const winners=leaders(board);if(board.pot>0&&!winners.length)unawarded.push(key);
-    if(board.pot>0&&winners.length)winners.forEach(p=>p.prize=board.pot/winners.length);
-   }}
+   for(const [key,board] of [['net',net],['stableford',stableford]])if(board.unallocated>0)unawarded.push(key);
   }
  }
+
  return {required,finished,pending,net,stableford,decisions,awaitingChoice,payoutPending,unawarded};
 }
 

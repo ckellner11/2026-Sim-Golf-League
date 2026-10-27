@@ -62,10 +62,34 @@ function awards(d){
   const rows=players.map(p=>{const kept=[...p.rounds].sort((a,b)=>ascending?a[metric]-b[metric]||a.week-b.week:b[metric]-a[metric]||a.week-b.week).slice(0,required);return {...p,kept,total:sum(kept.map(r=>r[metric])),qualified:p.rounds.length>=required,place:null,prize:null};});
   rows.sort((a,b)=>Number(b.qualified)-Number(a.qualified)||(ascending?a.total-b.total:b.total-a.total)||a.name.localeCompare(b.name));
   let position=0,prior=null,place=0;for(const p of rows){if(!p.qualified)continue;position++;if(prior!==p.total)place=position;p.place=place;prior=p.total;}
-  const winners=rows.filter(p=>p.place===1),pot=number(c[potKey]);if(finished&&!pending&&Number.isFinite(pot)&&pot>=0&&winners.length)winners.forEach(p=>p.prize=pot/winners.length);
-  return {rows,pot:Number.isFinite(pot)?pot:null};
- };return {required,finished,pending,net:make('net',true,'netPrize'),stableford:make('stableford',false,'stablefordPrize')};
+  const pot=number(c[potKey]);
+  return {rows,pot:Number.isFinite(pot)&&pot>=0?pot:null};
+ };
+ const net=make('net',true,'netPrize'),stableford=make('stableford',false,'stablefordPrize');
+ const decisions=[],awaitingChoice=[],unawarded=[];let payoutPending=false;
+ function leaders(board){const eligible=board.rows.filter(p=>p.qualified&&!p.excluded);if(!eligible.length)return [];const best=eligible[0].total;return eligible.filter(p=>p.total===best);}
+ // Resolve overlaps in rounds, comparing actual split payouts before each round.
+ // Exclusions persist during this calculation; pass-downs can expose another overlap.
+ if(finished&&!pending){
+  if(net.pot===null||stableford.pot===null)payoutPending=true;
+  else {
+   for(let pass=0;pass<=players.length;pass++){
+    const nw=net.pot>0?leaders(net):[],sw=stableford.pot>0?leaders(stableford):[];
+    const overlap=nw.filter(n=>sw.some(s=>s.id===n.id));if(!overlap.length)break;
+    const np=net.pot/nw.length,sp=stableford.pot/sw.length;
+    const equal=Math.abs(np-sp)<1e-9;
+    for(const p of overlap){const keep=np>=sp?'net':'stableford';const excluded=(keep==='net'?stableford:net).rows.find(r=>r.id===p.id);excluded.excluded=true;excluded.keptAward=keep;decisions.push({player:p.id,keep,netAmount:np,stablefordAmount:sp,equalPayout:equal});}
+   }
+   if(!payoutPending){for(const [key,board] of [['net',net],['stableford',stableford]]){
+    let position=0,prior=null,place=0;for(const p of board.rows){p.place=null;if(!p.qualified||p.excluded)continue;position++;if(prior!==p.total)place=position;p.place=place;prior=p.total;}
+    const winners=leaders(board);if(board.pot>0&&!winners.length)unawarded.push(key);
+    if(board.pot>0&&winners.length)winners.forEach(p=>p.prize=board.pot/winners.length);
+   }}
+  }
+ }
+ return {required,finished,pending,net,stableford,decisions,awaitingChoice,payoutPending,unawarded};
 }
+
 function skins(d){
  let carry=0,carryKnown=true;const result=[];
  for(const w of [...d.Weeks].sort((a,b)=>a.week-b.week)){

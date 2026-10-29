@@ -107,7 +107,10 @@ function skins(d){
   else {const ids=d.Matches.filter(m=>+m.week===+w.week).map(m=>m.id);rows=d.Rounds.filter(r=>ids.includes(r.match)).map(r=>({...r,entity:r.player}));}
   const expected=team?4:16;const assigned=rows.length===expected&&rows.every(r=>!empty(r.entity))&&new Set(rows.map(r=>r.entity)).size===expected;
   const valid=v=>Number.isInteger(number(v))&&v>=1&&v<=30;
-  const holes=Array.from({length:9},(_,i)=>{const scored=rows.filter(r=>!empty(r.entity)&&valid(r['h'+(i+1)]));const low=scored.length?Math.min(...scored.map(r=>+r['h'+(i+1)])):null;const leaders=scored.filter(r=>+r['h'+(i+1)]===low).map(r=>r.entity);return {hole:i+1,low,leaders,remaining:Math.max(0,expected-scored.length),state:leaders.length===0?'Awaiting scores':leaders.length===1?'Outright leader':'Tied'};});
+  const ranks=(d.Holes||[]).filter(h=>+h.week===+w.week),rankValid=ranks.length===9&&new Set(ranks.map(h=>+h.hole)).size===9&&new Set(ranks.map(h=>+h.rank)).size===9&&ranks.every(h=>Number.isInteger(number(h.hole))&&h.hole>=1&&h.hole<=9&&Number.isInteger(number(h.rank))&&h.rank>=1&&h.rank<=9);
+  const shots=(hcp,rank)=>hcp>=0?Math.floor(hcp/9)+(rank<=hcp%9?1:0):-shots(-hcp,10-rank);
+  const score=(r,hole)=>!valid(r['h'+hole])?null:team?+r['h'+hole]:rankValid&&Number.isInteger(number(r.hcp))?+r['h'+hole]-shots(+r.hcp,+ranks.find(h=>+h.hole===hole).rank):null;
+  const holes=Array.from({length:9},(_,i)=>{const scored=rows.filter(r=>!empty(r.entity)&&score(r,i+1)!==null);const low=scored.length?Math.min(...scored.map(r=>score(r,i+1))):null;const leaders=scored.filter(r=>score(r,i+1)===low).map(r=>r.entity);return {hole:i+1,low,leaders,remaining:Math.max(0,expected-scored.length),state:leaders.length===0?'Awaiting scores':leaders.length===1?'Outright leader':'Tied'};});
   const complete=assigned&&holes.every(h=>h.remaining===0),pot=carryKnown?80+carry:null;
   const counts={};holes.filter(h=>h.leaders.length===1).forEach(h=>counts[h.leaders[0]]=(counts[h.leaders[0]]||0)+1);const total=sum(Object.values(counts));
   const payouts=Object.entries(counts).map(([entity,count])=>({entity,count,calculated:complete&&pot!==null&&total?pot*count/total:null,final:null}));

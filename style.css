@@ -25,3 +25,17 @@
 #view[data-section="schedule"] .scorecard td,#view[data-section="schedule"] .scorecard th{font-size:14px;padding:11px}
 #view[data-section="schedule"] .card-top{font-size:13px}
 #view[data-section="teams"] li{font-size:18px;line-height:1.9}
+
+/* Schedule reads in playing-day and tee-time order. Matchups stay visible. */
+.schedule-help{color:var(--muted);margin:-8px 0 24px;line-height:1.6}
+.schedule-days{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px;align-items:start}
+.schedule-day{min-width:0}.schedule-day>h3{font-size:22px;border-bottom:3px solid var(--green);padding-bottom:14px;margin-bottom:16px}
+.schedule-match{padding:22px;background:white;border:1px solid var(--line);border-radius:12px;margin-bottom:16px;min-width:0}
+.schedule-match-top{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:22px}.schedule-match-top>strong{font-size:25px}
+.schedule-team{display:block;color:var(--muted);font-size:14px;font-weight:600}
+.schedule-names{font-size:21px;font-weight:700;line-height:1.5;margin:4px 0;overflow-wrap:anywhere}
+.schedule-versus{display:block;font-size:13px;color:var(--muted);margin:10px 0}
+.schedule-result{border-top:1px solid var(--line);padding-top:16px;font-weight:600;line-height:1.6;margin-bottom:0}
+.schedule-scorecard{margin-top:16px}.schedule-scorecard summary{cursor:pointer;font-weight:600;padding:8px 0}.schedule-scorecard p{line-height:1.6}
+.schedule-empty{color:var(--muted);padding:18px 0;line-height:1.6}.schedule-scramble-results{margin-top:28px}
+@media(max-width:700px){.schedule-days{grid-template-columns:1fr;gap:20px}.schedule-match{padding:20px}.schedule-names{font-size:20px}}

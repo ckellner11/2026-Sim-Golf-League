@@ -44,3 +44,5 @@
 .weekly-opponents h3{font-size:15px;margin:0 0 10px;color:var(--muted)}
 .weekly-opponents>div{display:flex;gap:12px 32px;flex-wrap:wrap}.weekly-opponents p{margin:0;line-height:1.7}.weekly-opponents small{display:block;color:var(--muted)}
 .schedule-side{padding:10px 12px;border-radius:8px}.schedule-side-winner{background:#edf5de;border:1px solid #a1b87c}.winner-tag{display:inline-block;font-size:14px;font-weight:700;margin-top:3px;color:#275329}
+
+.scorecard-summary td{background:#eef2e9;font-weight:700;border-top:2px solid var(--line)}

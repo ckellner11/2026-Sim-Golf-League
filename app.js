@@ -57,7 +57,7 @@ function playerSchedule(){
 function schedule(){
  const w=data.Weeks.find(w=>+w.week===week);
  const header=heading('Week '+week+' · Schedule & results',`${esc(w.course||'Course TBD')} · ${esc(formatName(w.format||'BEST_BALL'))}`,`<label>Week <select id="week">${data.Weeks.map(w=>`<option value="${w.week}" ${+w.week===week?'selected':''}>${w.week} · ${date(w.wed)} & ${date(w.sat)}</option>`).join('')}</select></label>`);
- const fixtures=model.fixtures.filter(f=>+f.week===week),pairs=fixtures.flatMap(f=>f.pairs);
+ const fixtures=model.fixtures.filter(f=>+f.week===week),pairs=fixtures.flatMap(f=>f.pairs.map(p=>({...p,teams:p.teams||f.teams||[null,null]})));
  const teamSummary=w.format==='SCRAMBLE'?'':`<section class="weekly-opponents" aria-label="This week’s team matchups"><h3>This week’s team matchups</h3><div>${fixtures.map(f=>`<p><strong>${esc(name(f.teams[0]))}</strong><span> vs </span><strong>${esc(name(f.teams[1]))}</strong>${f.pairs.some(p=>p.complete)?`<small>${f.points.join(' – ')} league points · ${f.complete?'Final':'In progress'}</small>`:''}</p>`).join('')}</div></section>`;
  const longDate=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'Date to be confirmed';
  const slot=p=>Number(String(p.id).match(/[AB]-?([12])$/i)?.[1]||9);

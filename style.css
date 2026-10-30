@@ -66,3 +66,6 @@
 .personal-schedule td:nth-child(6)::before{content:'Course / format'}
 #view[data-section="my-schedule"] .section-head label,#schedule-player{max-width:100%}
 }
+
+.course-photo{margin:0 0 16px}.course-photo img{display:block;width:100%;aspect-ratio:16/10;object-fit:cover;border-radius:8px;background:#edf2e5}.course-photo img[hidden]{display:none}.course-photo figcaption{font-size:11px;color:var(--muted);margin-top:6px;line-height:1.4}
+.course-logo{display:flex;align-items:center;justify-content:center;width:144px;height:76px;padding:8px;margin-bottom:16px;border-radius:8px;background:#fff;border:1px solid var(--line)}.course-logo img{max-width:100%;max-height:100%;object-fit:contain}.course-logo-dark{background:var(--ink)}.course-logo[hidden]{display:none}

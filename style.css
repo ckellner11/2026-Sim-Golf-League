@@ -46,3 +46,23 @@
 .schedule-side{padding:10px 12px;border-radius:8px}.schedule-side-winner{background:#edf5de;border:1px solid #a1b87c}.winner-tag{display:inline-block;font-size:14px;font-weight:700;margin-top:3px;color:#275329}
 
 .scorecard-summary td{background:#eef2e9;font-weight:700;border-top:2px solid var(--line)}
+
+/* Personal schedule becomes a vertical list on phones. */
+@media(max-width:700px){
+.personal-schedule{border:0;background:transparent;overflow:visible}
+.personal-schedule table,.personal-schedule tbody{display:block;width:100%;white-space:normal}
+.personal-schedule thead{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%)}
+.personal-schedule tbody tr{display:grid;grid-template-columns:minmax(0,1fr) auto;background:white;border:1px solid var(--line);border-radius:12px;margin-bottom:16px;padding:16px;gap:10px 12px}
+.personal-schedule td{display:block;text-align:left;border:0;padding:0;min-width:0;overflow-wrap:anywhere;line-height:1.5}
+.personal-schedule td:first-child{grid-column:1/-1;font-size:13px;font-weight:700;color:var(--muted)}
+.personal-schedule td:first-child::before{content:'Week '}
+.personal-schedule td:nth-child(2){font-size:17px;font-weight:700}
+.personal-schedule td:nth-child(3){font-weight:700;font-size:16px}
+.personal-schedule td:nth-child(n+4){grid-column:1/-1;font-size:16px}
+.personal-schedule td:nth-child(4){border-top:1px solid var(--line);padding-top:12px}
+.personal-schedule td:nth-child(n+4)::before{display:block;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:3px}
+.personal-schedule td:nth-child(4)::before{content:'Your pair / team'}
+.personal-schedule td:nth-child(5)::before{content:'Opponents'}
+.personal-schedule td:nth-child(6)::before{content:'Course / format'}
+#view[data-section="my-schedule"] .section-head label,#schedule-player{max-width:100%}
+}

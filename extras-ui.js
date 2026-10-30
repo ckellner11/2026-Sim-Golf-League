@@ -26,16 +26,13 @@ function startingHistory(h){
  ${calc?`<p><strong>Historical calculation:</strong> average ${precision(calc.average)} × 75% + best ${Math.ceil(used.length/2)} average ${precision(calc.best)} × 25% = base ${precision(calc.base)}.</p><p>Subtract fixed zero ${precision(zero)}, floor at zero, then apply 90% and round: <strong>${target??'Pending zero reference'}</strong>.</p>`:'<p>No valid eligible historical rounds are available for calculation.</p>'}
  <p><strong>Selected starting handicap:</strong> ${h.initial}. ${target!==null&&target!==h.initial?'This differs from the historical formula result. Starting handicaps may be revised by the admin before play.':'The starting value remains admin-editable before play.'} This comparison uses the currently configured zero reference and historical inputs; it does not change any handicap.</p><p class="note">Historical tee adjustments are separate from original scores and apply only to 2025 rounds. Displayed calculations are rounded for readability; calculations use full precision. No historical course-difficulty adjustment was supplied, so imported difficulty values started at zero.</p>`;
 }
-// Random display order only; keep existing players in place during this visit.
-const handicapDisplayOrder=[];
-function shuffledHandicaps(rows){
- const newcomers=rows.map(h=>h.player).filter(id=>!handicapDisplayOrder.includes(id));
- for(let i=newcomers.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[newcomers[i],newcomers[j]]=[newcomers[j],newcomers[i]];}
- handicapDisplayOrder.push(...newcomers);
- return [...rows].sort((a,b)=>handicapDisplayOrder.indexOf(a.player)-handicapDisplayOrder.indexOf(b.player));
+function alphabeticHandicaps(rows){
+ const display=h=>String(player(h.player)).trim();
+ const first=h=>display(h).split(/\s+/)[0];
+ return [...rows].sort((a,b)=>first(a).localeCompare(first(b),'en',{sensitivity:'base'})||display(a).localeCompare(display(b),'en',{sensitivity:'base'})||String(a.player).localeCompare(String(b.player)));
 }
 function handicapView(){
- const c=LeagueExtras.config(data),hh=shuffledHandicaps(LeagueExtras.handicaps(data));
+ const c=LeagueExtras.config(data),hh=alphabeticHandicaps(LeagueExtras.handicaps(data));
  const initial=h=>{const cards=(data.Rounds||[]).filter(r=>r.player===h.player&&(data.Matches||[]).some(m=>m.id===r.match&&Number(m.week)===1));const values=cards.filter(r=>r.hcp!==''&&r.hcp!=null&&Number.isFinite(Number(r.hcp))).map(r=>Number(r.hcp));return values.length?values.every(v=>v===values[0])?values[0]:'Check Week 1':h.initial;};
  const teeMark=h=>['forward','back'].includes(String(h.tee).trim().toLowerCase())?'*':'';
  const current=h=>{if(!data.baselinePending)return h.current??'—';const v=data.Players.find(p=>p.id===h.player)?.hcp;return v!==''&&v!=null&&Number.isFinite(Number(v))?Number(v):'—';};

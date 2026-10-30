@@ -83,9 +83,9 @@ window.LEAGUE_COURSE_MEDIA = [
   },
   {
     "name": "The Old Game",
-    "photo": "https://i.ytimg.com/vi/Mx7RPV_3wAg/maxresdefault.jpg",
+    "photo": "https://i.ytimg.com/vi/NRw8w4qV48E/maxresdefault.jpg",
     "logo": "",
-    "source": "https://www.youtube.com/watch?v=Mx7RPV_3wAg",
+    "source": "https://www.youtube.com/watch?v=NRw8w4qV48E&t=233s",
     "credit": "GSPro showcase thumbnail · YouTube",
     "darkLogo": false,
     "logoLabel": "The Old Game logo"

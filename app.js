@@ -56,7 +56,15 @@ function stablefordCard(p){
 }
 function fixtureCard(f){return `<article class="card ${f.winner&&+f.week===12?'winner':''}"><div class="card-top"><span>${esc(f.id)} · ${f.complete?'Complete':'Scheduled / in progress'}</span><span>${+f.week<=10?'Team matchup':'Playoff'}</span></div><div class="match-line">${team(f.teams[0])}<strong>${f.pairs.some(p=>p.complete)?f.points[0]:'—'}</strong></div><div class="match-line">${team(f.teams[1])}<strong>${f.pairs.some(p=>p.complete)?f.points[1]:'—'}</strong></div>${f.pairs.map(p=>{const rr=data.Rounds.filter(r=>r.match===p.id);return `<details class="pair" open><summary>${date(p.match.date)} · ${esc(formatName(p.format))} · ${esc(p.id)} · ${p.complete?p.points.join(' – '):'Awaiting scores'}</summary><p>A: ${rr.filter(r=>r.side==='A').map(r=>esc(player(r.player))).join(' + ')}<br>B: ${rr.filter(r=>r.side==='B').map(r=>esc(player(r.player))).join(' + ')}</p>${scorecard(p)}</details>`;}).join('')}${+f.week>10&&f.complete&&f.points[0]===f.points[1]?`<p class="note">${f.winner?'Playoff winner: '+esc(name(f.winner))+' · '+esc(f.playoff.note):'Team points tied. Awaiting the winner of an admin-determined playoff.'}</p>`:''}</article>`;}
 let schedulePlayer='';
+function clockMinutes(value){
+ const v=String(value??'').trim(),t=v.match(/^(\d{1,2})(?::(\d{2}))?\s*(AM|PM)$/i),mil=v.match(/^(\d{1,2}):(\d{2})$/);
+ if(t&&+t[1]>=1&&+t[1]<=12&&+(t[2]||0)<60)return (+t[1]%12+(t[3].toUpperCase()==='PM'?12:0))*60+ +(t[2]||0);
+ if(mil&&+mil[1]<24&&+mil[2]<60)return +mil[1]*60+ +mil[2];
+ return null;
+}
 function matchTime(m,w){
+ if(String(m.time??'').trim()){const minutes=clockMinutes(m.time);if(minutes===null)return 'Check time';const hour=Math.floor(minutes/60);return (hour%12||12)+':'+String(minutes%60).padStart(2,'0')+' '+(hour>=12?'PM':'AM');}
+
  // Pair-match IDs W1A-1/W1A1 and W1B-2/W1B2 use slots 1 and 2.
  const slot=String(m.id).match(/A-?([12])$|B-?([12])$/i);
  if(!slot)return 'Time TBD';const early=Number(slot[1]||slot[2])===1;
@@ -73,7 +81,7 @@ function playerSchedule(){
   const matches=data.Matches.filter(m=>Number(m.week)===Number(w.week)&&data.Rounds.some(r=>r.match===m.id&&r.player===selected.id));
   if(!matches.length)return `<tr><td>${w.week}</td><td>Date TBD</td><td>Time TBD</td><td>${Number(w.week)>10?'Playoff assignment pending':'Not assigned yet'}</td><td>To be confirmed</td><td>${label}</td></tr>`;
   return matches.map(m=>{const rows=data.Rounds.filter(r=>r.match===m.id),own=rows.find(r=>r.player===selected.id);const names=rr=>rr.map(r=>esc(player(r.player))).join(' + ')||'TBD';return `<tr><td>${w.week}</td><td>${day(m.date)}</td><td>${matchTime(m,w)}</td><td>${(m.format||w.format)==='SINGLES'?esc(selected.name):names(rows.filter(r=>r.side===own.side))}</td><td>${names(rows.filter(r=>r.side!==own.side))}</td><td>${esc(w.course||'Course TBD')}<br><small>${esc(formatName(m.format||w.format||'BEST_BALL'))}</small></td></tr>`;}).join('');
- }).join('')}</tbody></table></div><p class="note">Times are local league times. Pair match 1 uses the early slot; pair match 2 uses the late slot, based on its assigned Wednesday or Saturday date. Scramble times come from the team card; playoff times remain TBD until separately scheduled. Scramble teammates reflect the current team roster. Assignments can change.</p>`;}else body='<div class="notice">Choose your name to see your full season on one page.</div>';
+ }).join('')}</tbody></table></div><p class="note">Times are local league times. Pair match 1 uses the early slot; pair match 2 uses the late slot, based on its assigned Wednesday or Saturday date. An entered Matches time overrides the default, including for playoffs. Scramble times come from the team card; blank playoff times remain TBD. Scramble teammates reflect the current team roster. Assignments can change.</p>`;}else body='<div class="notice">Choose your name to see your full season on one page.</div>';
  return heading('My season schedule',selected?esc(selected.name)+' · All 12 weeks':'Dates, times, partners and opponents.',selector)+body;
 }
 function schedule(){
@@ -82,12 +90,11 @@ function schedule(){
  const fixtures=model.fixtures.filter(f=>+f.week===week),pairs=fixtures.flatMap(f=>f.pairs.map(p=>({...p,teams:p.teams||f.teams||[null,null]})));
  const teamSummary=w.format==='SCRAMBLE'?'':`<section class="weekly-opponents" aria-label="This week’s team matchups"><h3>This week’s team matchups</h3><div>${fixtures.map(f=>`<p><strong>${esc(name(f.teams[0]))}</strong><span> vs </span><strong>${esc(name(f.teams[1]))}</strong>${f.pairs.some(p=>p.complete)?`<small>${f.points.join(' – ')} league points · ${f.complete?'Final':'In progress'}</small>`:''}</p>`).join('')}</div></section>`;
  const longDate=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'Date to be confirmed';
- const slot=p=>Number(String(p.id).match(/[AB]-?([12])$/i)?.[1]||9);
  const matchCard=p=>{const rows=data.Rounds.filter(r=>r.match===p.id);const winningNames=rows.filter(r=>r.side===p.winner).map(r=>player(r.player)).join(' + ')||'Winning players';return `<article class="schedule-match"><div class="schedule-match-top"><strong>${matchTime(p.match,w)}</strong><span class="badge">${p.complete?(p.winner?'Final':'Final · Tied'):'Scheduled / awaiting results'}</span></div><div class="schedule-opponents">${['A','B'].map((side,i)=>`${i?'<span class="schedule-versus">vs</span>':''}<div class="schedule-side ${p.complete&&p.winner===side?'schedule-side-winner':''}"><span class="schedule-team">${esc(name(p.teams[i]))}</span><p class="schedule-names">${rows.filter(r=>r.side===side).map(r=>esc(player(r.player))).join(' + ')||'Players to be confirmed'}</p>${p.complete&&p.winner===side?'<span class="winner-tag">✓ Winner</span>':''}</div>`).join('')}</div>${p.complete?`<p class="schedule-result">${esc(p.winner?winningNames+' won · '+p.label:'Match tied')} · ${p.points.join(' – ')} league points</p><details class="schedule-scorecard"><summary>View scorecard</summary>${scorecard(p)}</details>`:''}</article>`;};
  const scramble=w.format==='SCRAMBLE';
  const cards=scramble?(data.Scramble||[]).filter(r=>+r.week===week):pairs;
  const assignedDate=c=>scramble?c.date:c.match.date;
- const timeOrder=c=>{if(!scramble)return slot(c);const m=String(c.time||'').match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);return m?(+m[1]%12+(m[3].toUpperCase()==='PM'?12:0))*60+ +m[2]:9999;};
+ const timeOrder=c=>clockMinutes(scramble?c.time:matchTime(c.match,w))??9999;
  const card=c=>scramble?`<article class="schedule-match"><div class="schedule-match-top"><strong>${esc(c.time||'Time TBD')}</strong><span class="badge">Team scramble</span></div><span class="schedule-team">${esc(name(c.team))}</span><p class="schedule-names">${data.Players.filter(p=>p.team===c.team).map(p=>esc(p.name)).join(' + ')||'Players to be confirmed'}</p></article>`:matchCard(c);
  const dates=[w.wed,w.sat,...new Set(cards.map(assignedDate).filter(d=>d&&d!==w.wed&&d!==w.sat))];
  const dayBlock=(title,items)=>`<section class="schedule-day"><h3>${esc(title)}</h3>${items.sort((a,b)=>timeOrder(a)-timeOrder(b)).map(card).join('')||'<p class="schedule-empty">Match assignments to be confirmed.</p>'}</section>`;
@@ -120,6 +127,7 @@ function admin(){let link='';try{const u=new URL(window.LEAGUE_CONFIG.sheetUrl);
 <li><strong>After both days:</strong> once all 16 individual cards are complete, choose League → 2. Finish a week (update handicaps). Enter the week number and a reason. The system saves the weekly difficulty adjustment and updates Players → hcp for future play. You do not need to edit that column manually.</li>
 </ol>
 <h3>Week 7: scramble</h3>
+<h3>Change a match start time</h3><p>Choose League → Set match times to add or open the time column in Matches. Enter a time such as 5:00 PM or 7:30 PM. To swap two matches on the same day, enter the desired time on each match’s row. Leave time blank to use the usual slot based on the match ID; blank playoff times remain TBD. Both schedule pages use the override, and the weekly page sorts matches by start time. Do not rename match IDs. You can edit dates in Matches separately when needed. These edits do not change players, scorecards or frozen handicaps.</p>
 <p>Choose League → Set scramble times to open Scramble and add a time column if needed. Enter each team’s date and start time (for example 5:00 PM), plus one nine-hole gross team card per team. Blank times display Time TBD. Times appear in Schedule & results and My schedule. Use SCRAMBLE in Weeks. Skip Prepare a week and Finish a week for this week: shared team scores do not update individual handicaps or season awards. All four complete cards are needed for final results and team skins.</p>
 <h3>Corrections and substitutes</h3>
 <p>For a corrected gross score, edit Rounds. If that week was already finalized, choose League → Corrections → Recalculate a corrected week and give a reason. New history revisions update current handicaps while retaining the handicaps and expectations saved for past competition.</p>

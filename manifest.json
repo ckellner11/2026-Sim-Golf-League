@@ -5,8 +5,8 @@
   "start_url": "./#schedule",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#f7f5ef",
-  "theme_color": "#173d33",
+  "background_color": "#c7d0c3",
+  "theme_color": "#c7d0c3",
   "icons": [
     {
       "src": "favicon.svg",

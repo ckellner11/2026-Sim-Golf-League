@@ -14,7 +14,7 @@ main{padding:20px 32px 60px}
 .connection{display:flex;align-items:center;justify-content:space-between;gap:20px;font-size:12px;color:var(--muted)}
 button,select,input{font:inherit;border:1px solid var(--line);border-radius:8px;padding:10px 14px;background:var(--surface);color:var(--ink)}
 button{cursor:pointer}
-button:hover{background:var(--cream)}
+button:hover{background:var(--surface-alt)}
 a{color:var(--green)}
 nav{display:flex;gap:25px;overflow-x:auto;border-bottom:1px solid var(--line);margin:14px 0 30px}
 nav a{white-space:nowrap;text-decoration:none;font-weight:600;color:var(--muted);padding:17px 0;border-bottom:3px solid transparent}
@@ -262,7 +262,7 @@ nav a{font-size:13px}
 .schedule-scorecard .table-wrap{max-width:100%}}
 @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
 .current-week{margin-top:14px;text-decoration:underline;font-weight:600}
-.personal-match-summary{flex-basis:100%;padding:16px;border-left:4px solid var(--gold);background:var(--cream);display:grid;gap:8px;line-height:1.5}
+.personal-match-summary{flex-basis:100%;padding:16px;border-left:4px solid var(--gold);background:var(--surface);display:grid;gap:8px;line-height:1.5}
 .personal-match-summary strong{font-size:19px}
 .personal-match-summary span{font-size:14px}
 .schedule-day>h3{background:var(--surface-alt);padding:16px;border-radius:8px;border-bottom:3px solid var(--line)}

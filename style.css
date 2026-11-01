@@ -92,3 +92,15 @@ footer{flex-wrap:wrap;justify-content:center;text-align:center;gap:10px 24px;pad
 
 .player-identity{display:flex;align-items:center;justify-content:space-between;gap:16px;flex-basis:100%;padding:18px;background:var(--ink);color:white;border-radius:8px;margin-bottom:12px}.player-identity>div{display:grid;gap:6px;min-width:0}.player-identity span{font-size:12px;text-transform:uppercase;letter-spacing:1px}.player-identity strong{font-size:27px;overflow-wrap:anywhere}.player-identity small{font-size:12px;color:#e0e9df;line-height:1.5}.player-identity button{flex-shrink:0;font-weight:700}.match-finder .player-identity{margin-bottom:0}
 @media(max-width:700px){.schedule-match{grid-template-columns:105px minmax(0,1fr)}.schedule-match-top>strong{font-size:22px}.player-identity{align-items:flex-start;flex-direction:column;padding:16px}.player-identity strong{font-size:26px}.player-identity button{font-size:14px;padding:10px 14px}}
+/* Match cards: full-width time header prevents collisions with player names. */
+.schedule-match{display:flex;flex-direction:column;gap:0;padding:20px;overflow:hidden}
+.schedule-match-top{display:flex;flex-direction:row;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px 16px;width:100%;border-right:0;border-bottom:1px solid var(--line);padding:0 0 14px;margin:0 0 16px;min-width:0}
+.schedule-match-top>strong{font:700 25px/1.2 'DM Sans',Arial,sans-serif;white-space:normal}
+.schedule-match-top .my-match-label{flex-basis:100%}
+.schedule-match-top .badge{max-width:100%;font-size:11px;line-height:1.4}
+.schedule-opponents{width:100%;display:flex;flex-direction:column;gap:10px}
+.schedule-side{min-width:0}.schedule-team{display:block;line-height:1.5}.schedule-names{font-size:19px;line-height:1.5;overflow-wrap:break-word;margin:6px 0 0}
+.schedule-versus{display:block;margin:0;font-size:14px;line-height:1.2}
+.schedule-result{margin:16px 0 0;line-height:1.5}.schedule-scorecard{margin-top:14px;width:100%;min-width:0}
+.schedule-match>.schedule-names{margin-top:8px}
+@media(max-width:700px){.schedule-match{padding:16px}.schedule-match-top>strong{font-size:24px}.schedule-names{font-size:18px}.schedule-match-top .badge{font-size:10px}}

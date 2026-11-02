@@ -354,3 +354,7 @@ footer .connection{width:100%;justify-content:center;align-items:center;margin:8
  .weekly-opponents{padding:10px 12px;margin-bottom:14px}.weekly-opponents h3{margin-bottom:6px}.weekly-opponents p{font-size:13px;line-height:1.5}.weekly-opponents p+p{margin-top:6px}.weekly-opponents small{display:inline;margin-left:8px}
  .schedule-help{display:none}.schedule-day>h3{padding:12px;margin-top:0;margin-bottom:12px;font-size:22px}
 }
+
+/* Stroke markers stay separate from gross-score notation, including empty cells. */
+.scorecard td.score-hole{position:relative;min-width:44px;height:48px;padding:14px 6px 6px}
+.stroke-dots{position:absolute;top:1px;right:4px;font-size:13px;line-height:12px;letter-spacing:1px;color:var(--ink);white-space:nowrap}

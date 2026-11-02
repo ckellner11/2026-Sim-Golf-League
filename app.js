@@ -75,16 +75,40 @@ function golfScore(score,par){
  const label=`${score} strokes, ${diff===0?'par':Math.abs(diff)+' '+(diff<0?'under':'over')+' par'}`;
  return `<span class="golf-score ${kind}" title="${esc(label)}"><span aria-hidden="true">${esc(score)}</span><span class="sr-only">${esc(label)}</span></span>`;
 }
+// Hole remains the score-entry slot (h1…h9); courseHole is a display label only.
+function courseHoleLabel(week,slot){const h=data.Holes.find(h=>+h.week===+week&&+h.hole===+slot);return h&&String(h.courseHole??'').trim()!==''?h.courseHole:slot;}
+function scorecardSetup(p){
+ const holes=(p.holes||data.Holes.filter(h=>+h.week===+p.match.week)).slice().sort((a,b)=>a.hole-b.hole);
+ if(holes.length!==9||holes.some((h,i)=>+h.hole!==i+1||!Number.isInteger(+h.par)||+h.par<1||!Number.isInteger(+h.rank)||+h.rank<1||+h.rank>9)||new Set(holes.map(h=>+h.rank)).size!==9)return {error:'Scorecard pending: enter nine pars and unique stroke ranks 1–9.'};
+ const labeled=holes.filter(h=>String(h.courseHole??'').trim()!=='');
+ if(labeled.length&&(labeled.length!==9||holes.some((h,i)=>!Number.isInteger(+h.courseHole)||+h.courseHole<1||+h.courseHole>18||(i>0&&+h.courseHole<=+holes[i-1].courseHole))))return {error:'Scorecard setup needs attention: enter all nine courseHole numbers, in ascending order, from 1–18.'};
+ if(p.complete)return {...p,holes};
+ // Use the existing engine's validation and stroke allocation without publishing
+ // fabricated results: placeholder scores are discarded immediately below.
+ const rows=data.Rounds.filter(r=>r.match===p.id);
+ const fixture=model.fixtures.find(f=>f.pairs.some(pair=>pair.id===p.id));
+ const teams=p.teams||fixture?.teams||[];
+ const probe=League.pair({...data,Rounds:data.Rounds.map(r=>r.match===p.id?{...r,...Object.fromEntries(holes.map(h=>['h'+h.hole,4]))}:r)},p.match,teams);
+ const rounds=rows.map(r=>{const allocated=probe.complete?probe.rounds.find(x=>x.player===r.player):null;const gross=holes.map(h=>{const v=r['h'+h.hole];return String(v??'').trim()!==''&&Number.isInteger(+v)&&+v>=1&&+v<=30?+v:'';});return {...r,shots:allocated?allocated.shots:null,gross,grossTotal:gross.every(v=>v!=='')?gross.reduce((a,b)=>a+b,0):''};});
+ return {...p,holes,rounds,teams,allocationPending:!probe.complete,allocationMessage:probe.message};
+}
+function strokeDots(shots,rank){
+ if(shots===null||shots===undefined)return '';
+ const count=League.strokes(shots,+rank);if(!count)return '';
+ const label=Math.abs(count)+' stroke'+(Math.abs(count)===1?'':'s')+(count>0?' received':' given back');
+ return `<span class="stroke-dots" title="${esc(label)}"><span aria-hidden="true">${count>0?'•'.repeat(count):'−'.repeat(-count)}</span><span class="sr-only">${esc(label)}</span></span>`;
+}
 function scorecardRows(p){
  const row=(label,values,total='')=>`<tr><td>${label}</td>${values.map(v=>`<td>${esc(v)}</td>`).join('')}<td>${esc(total)}</td></tr>`;
  const rounds=[...p.rounds].sort((a,b)=>a.side.localeCompare(b.side));
- return row('Par',p.holes.map(h=>h.par),p.holes.reduce((n,h)=>n+Number(h.par),0))+row('Handicap',p.holes.map(h=>h.rank))+rounds.map(r=>`<tr><td>${esc(player(r.player))} (${esc(r.shots)})</td>${r.gross.map((v,i)=>`<td>${golfScore(v,p.holes[i].par)}</td>`).join('')}<td>${esc(r.grossTotal)}</td></tr>`).join('');
+ return row('Par',p.holes.map(h=>h.par),p.holes.reduce((n,h)=>n+Number(h.par),0))+row('Handicap',p.holes.map(h=>h.rank))+rounds.map(r=>`<tr><td>${esc(player(r.player))} (${r.shots===null?'pending':esc(r.shots)})</td>${r.gross.map((v,i)=>`<td class="score-hole">${strokeDots(r.shots,p.holes[i].rank)}${golfScore(v,p.holes[i].par)}</td>`).join('')}<td>${esc(r.grossTotal)}</td></tr>`).join('');
 }
-function scorecardLegend(){return '<p class="scorecard-legend">Gross score symbols: circle = birdie; double circle = eagle or better; square = bogey; double square = double bogey or worse. Under par is red; over par is blue.</p>';}
-function scorecardTable(p,footer){return `<div class="table-wrap"><table class="scorecard"><thead><tr><th>Player / gross</th>${p.holes.map(h=>`<th>${h.hole}</th>`).join('')}<th>Total</th></tr></thead><tbody>${scorecardRows(p)}${footer}</tbody></table></div>`;}
+function scorecardLegend(){return '<p class="scorecard-legend">Dots in the upper-right show strokes received on that hole; a minus sign means a stroke given back. Gross score symbols: circle = birdie; double circle = eagle or better; square = bogey; double square = double bogey or worse. Under par is red; over par is blue.</p>';}
+function scorecardTable(p,footer){return `<div class="table-wrap"><table class="scorecard"><thead><tr><th>Player / gross</th>${p.holes.map(h=>`<th>${esc(h.courseHole||h.hole)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${scorecardRows(p)}${footer}</tbody></table></div>`;}
 function scorecard(p){
+ p=scorecardSetup(p);if(p.error)return `<p class="notice notice-info">${esc(p.error)}</p>`;
  if(p.complete&&p.format==='STABLEFORD')return stablefordCard(p);
- if(!p.complete)return `<p>${esc(p.message)}. No points awarded yet.</p>`;
+ if(!p.complete)return `<p class="notice notice-info">${p.allocationPending?'Stroke allocations pending: '+esc(p.allocationMessage||'save the match handicaps first')+'.':'Pre-match / in-progress scorecard. Stroke dots use the saved match handicaps.'} No points awarded until all scorecards are complete.</p>`+scorecardTable(p,'')+scorecardLegend()+`<p>Parentheses show ${p.format==='STABLEFORD'?'the full allowance-adjusted handicap':'strokes off the lowest allowance-adjusted handicap in this match'}. Handicap lists the manually assigned stroke ranks 1–9.</p>`;
  let lead=0;const running=p.wins.map(win=>{lead+=win;return lead>0?lead+'UP':lead<0?Math.abs(lead)+'DN':'AS';});
  const matchRow=`<tr class="scorecard-summary"><td>Match</td>${running.map(v=>`<td class="match-${v.endsWith('UP')?'up':v.endsWith('DN')?'down':'square'}">${v}</td>`).join('')}<td class="match-${p.winner==='A'?'up':p.winner==='B'?'down':'square'}">${esc(p.label)}</td></tr>`;
  return `<p>${esc(p.winner?name(p.teams[p.winner==='A'?0:1])+' wins '+p.label:'Match tied')} · Allowance ${esc(p.match.allowance)}%</p>`+scorecardTable(p,matchRow)+scorecardLegend()+`<p>Strokes in parentheses = adjusted handicap minus the lowest adjusted handicap in this ${p.format==='SINGLES'?'singles match':'foursome'}. Handicap lists each hole’s stroke rank.</p><p>Match is shown from ${esc(name(p.teams[0]))}’s perspective (the first ${p.format==='SINGLES'?'player':'pair'} listed): UP = ahead, DN = behind, AS = all square. The row tracks all nine holes; the official result in Total locks when a lead exceeds the holes remaining.</p>`;
@@ -130,7 +154,7 @@ function schedule(){
  const fixtures=model.fixtures.filter(f=>+f.week===week),pairs=fixtures.flatMap(f=>f.pairs.map(p=>({...p,teams:p.teams||f.teams||[null,null]})));
  const teamSummary=w.format==='SCRAMBLE'?'':`<section class="weekly-opponents" aria-label="This week’s team matchups"><h3>This week’s team matchups</h3><div>${fixtures.map(f=>`<p><strong class="team-label team-tone-${teamTone(f.teams[0])}">${esc(name(f.teams[0]))}</strong><span> vs </span><strong class="team-label team-tone-${teamTone(f.teams[1])}">${esc(name(f.teams[1]))}</strong>${f.pairs.some(p=>p.complete)?`<small>${f.points.join(' – ')} league points · ${f.complete?'Final':'In progress'}</small>`:''}</p>`).join('')}</div></section>`;
  const longDate=d=>d?new Date(d+'T12:00:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric'}):'Date to be confirmed';
- const matchCard=p=>{const rows=data.Rounds.filter(r=>r.match===p.id);const winningNames=rows.filter(r=>r.side===p.winner).map(r=>player(r.player)).join(' + ')||'Winning players';return `<article class="schedule-match" ${rows.some(r=>r.player===schedulePlayer)?'data-my-match="true"':''}><div class="schedule-match-top">${rows.some(r=>r.player===schedulePlayer)?'<span class="my-match-label">Your match</span>':''}<strong>${matchTime(p.match,w)}</strong><span class="badge ${p.complete?'badge-final':'badge-pending'}">${p.complete?(p.winner?'Final':'Final · Tied'):'Scheduled / awaiting results'}</span></div><div class="schedule-opponents">${['A','B'].map((side,i)=>`${i?'<span class="schedule-versus">vs</span>':''}<div class="schedule-side ${p.complete&&p.winner===side?'schedule-side-winner':''}"><span class="schedule-team team-label team-tone-${teamTone(p.teams[i])}">${esc(name(p.teams[i]))}</span><p class="schedule-names">${rows.filter(r=>r.side===side).map(r=>esc(player(r.player))).join(' + ')||'Players to be confirmed'}</p>${p.complete&&p.winner===side?'<span class="winner-tag">✓ Winner</span>':''}</div>`).join('')}</div>${p.complete?`<p class="schedule-result">${esc(p.winner?winningNames+' won · '+p.label:'Match tied')} · ${p.points.join(' – ')} league points</p><details class="schedule-scorecard"><summary>View scorecard</summary>${scorecard(p)}</details>`:''}</article>`;};
+ const matchCard=p=>{const rows=data.Rounds.filter(r=>r.match===p.id);const winningNames=rows.filter(r=>r.side===p.winner).map(r=>player(r.player)).join(' + ')||'Winning players';return `<article class="schedule-match" ${rows.some(r=>r.player===schedulePlayer)?'data-my-match="true"':''}><div class="schedule-match-top">${rows.some(r=>r.player===schedulePlayer)?'<span class="my-match-label">Your match</span>':''}<strong>${matchTime(p.match,w)}</strong><span class="badge ${p.complete?'badge-final':'badge-pending'}">${p.complete?(p.winner?'Final':'Final · Tied'):'Scheduled / awaiting results'}</span></div><div class="schedule-opponents">${['A','B'].map((side,i)=>`${i?'<span class="schedule-versus">vs</span>':''}<div class="schedule-side ${p.complete&&p.winner===side?'schedule-side-winner':''}"><span class="schedule-team team-label team-tone-${teamTone(p.teams[i])}">${esc(name(p.teams[i]))}</span><p class="schedule-names">${rows.filter(r=>r.side===side).map(r=>esc(player(r.player))).join(' + ')||'Players to be confirmed'}</p>${p.complete&&p.winner===side?'<span class="winner-tag">✓ Winner</span>':''}</div>`).join('')}</div>${p.complete?`<p class="schedule-result">${esc(p.winner?winningNames+' won · '+p.label:'Match tied')} · ${p.points.join(' – ')} league points</p>`:''}<details class="schedule-scorecard"><summary>${p.complete?'View scorecard':'Preview scorecard'}</summary>${scorecard(p)}</details></article>`;};
  const scramble=w.format==='SCRAMBLE';
  const cards=scramble?(data.Scramble||[]).filter(r=>+r.week===week):pairs;
  const assignedDate=c=>scramble?c.date:c.match.date;

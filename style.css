@@ -356,5 +356,6 @@ footer .connection{width:100%;justify-content:center;align-items:center;margin:8
 }
 
 /* Stroke markers stay separate from gross-score notation, including empty cells. */
-.scorecard td.score-hole{position:relative;min-width:44px;height:48px;padding:14px 6px 6px}
-.stroke-dots{position:absolute;top:1px;right:4px;font-size:13px;line-height:12px;letter-spacing:1px;color:var(--ink);white-space:nowrap}
+.scorecard td.score-hole{min-width:44px;height:54px;padding:12px 6px;text-align:center;vertical-align:middle}
+.score-cell-content{position:relative;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;vertical-align:middle}
+.stroke-dots{position:absolute;top:-10px;left:22px;font-size:13px;line-height:12px;letter-spacing:1px;color:var(--ink);white-space:nowrap}

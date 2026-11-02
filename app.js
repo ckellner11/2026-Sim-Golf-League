@@ -101,7 +101,7 @@ function strokeDots(shots,rank){
 function scorecardRows(p){
  const row=(label,values,total='')=>`<tr><td>${label}</td>${values.map(v=>`<td>${esc(v)}</td>`).join('')}<td>${esc(total)}</td></tr>`;
  const rounds=[...p.rounds].sort((a,b)=>a.side.localeCompare(b.side));
- return row('Par',p.holes.map(h=>h.par),p.holes.reduce((n,h)=>n+Number(h.par),0))+row('Handicap',p.holes.map(h=>h.rank))+rounds.map(r=>`<tr><td>${esc(player(r.player))} (${r.shots===null?'pending':esc(r.shots)})</td>${r.gross.map((v,i)=>`<td class="score-hole">${strokeDots(r.shots,p.holes[i].rank)}${golfScore(v,p.holes[i].par)}</td>`).join('')}<td>${esc(r.grossTotal)}</td></tr>`).join('');
+ return row('Par',p.holes.map(h=>h.par),p.holes.reduce((n,h)=>n+Number(h.par),0))+row('Handicap',p.holes.map(h=>h.rank))+rounds.map(r=>`<tr><td>${esc(player(r.player))} (${r.shots===null?'pending':esc(r.shots)})</td>${r.gross.map((v,i)=>`<td class="score-hole"><span class="score-cell-content">${golfScore(v,p.holes[i].par)}${strokeDots(r.shots,p.holes[i].rank)}</span></td>`).join('')}<td>${esc(r.grossTotal)}</td></tr>`).join('');
 }
 function scorecardLegend(){return '<p class="scorecard-legend">Dots in the upper-right show strokes received on that hole; a minus sign means a stroke given back. Gross score symbols: circle = birdie; double circle = eagle or better; square = bogey; double square = double bogey or worse.</p>';}
 function scorecardTable(p,footer){return `<div class="table-wrap"><table class="scorecard"><thead><tr><th>Player / gross</th>${p.holes.map(h=>`<th>${esc(h.courseHole||h.hole)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${scorecardRows(p)}${footer}</tbody></table></div>`;}

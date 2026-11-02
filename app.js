@@ -98,22 +98,24 @@ function strokeDots(shots,rank){
  const label=Math.abs(count)+' stroke'+(Math.abs(count)===1?'':'s')+(count>0?' received':' given back');
  return `<span class="stroke-dots" title="${esc(label)}"><span aria-hidden="true">${count>0?'•'.repeat(count):'−'.repeat(-count)}</span><span class="sr-only">${esc(label)}</span></span>`;
 }
-function scorecardRows(p){
+function scorecardRows(p,teamRows=[]){
  const row=(label,values,total='')=>`<tr><td>${label}</td>${values.map(v=>`<td>${esc(v)}</td>`).join('')}<td>${esc(total)}</td></tr>`;
  const rounds=[...p.rounds].sort((a,b)=>a.side.localeCompare(b.side));
- return row('Par',p.holes.map(h=>h.par),p.holes.reduce((n,h)=>n+Number(h.par),0))+row('Handicap',p.holes.map(h=>h.rank))+rounds.map(r=>`<tr><td>${esc(player(r.player))} (${r.shots===null?'pending':esc(r.shots)})</td>${r.gross.map((v,i)=>`<td class="score-hole"><span class="score-cell-content">${golfScore(v,p.holes[i].par)}${strokeDots(r.shots,p.holes[i].rank)}</span></td>`).join('')}<td>${esc(r.grossTotal)}</td></tr>`).join('');
+ return row('Par',p.holes.map(h=>h.par),p.holes.reduce((n,h)=>n+Number(h.par),0))+row('Handicap',p.holes.map(h=>h.rank))+rounds.map((r,index)=>`<tr><td>${esc(player(r.player))} (${r.shots===null?'pending':esc(r.shots)})</td>${r.gross.map((v,i)=>`<td class="score-hole"><span class="score-cell-content">${golfScore(v,p.holes[i].par)}${strokeDots(r.shots,p.holes[i].rank)}</span></td>`).join('')}<td>${esc(r.grossTotal)}</td></tr>${rounds[index+1]?.side!==r.side?(teamRows[r.side==='A'?0:1]||''):''}`).join('');
 }
 function scorecardLegend(){return '<p class="scorecard-legend">Dots in the upper-right show strokes received on that hole; a minus sign means a stroke given back. Gross score symbols: circle = birdie; double circle = eagle or better; square = bogey; double square = double bogey or worse.</p>';}
-function scorecardTable(p,footer){return `<div class="table-wrap"><table class="scorecard"><thead><tr><th>Player / gross</th>${p.holes.map(h=>`<th>${esc(h.courseHole||h.hole)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${scorecardRows(p)}${footer}</tbody></table></div>`;}
+function scorecardTable(p,footer){return `<div class="table-wrap"><table class="scorecard"><thead><tr><th>Player / gross</th>${p.holes.map(h=>`<th>${esc(h.courseHole||h.hole)}</th>`).join('')}<th>Total</th></tr></thead><tbody>${scorecardRows(p,p.format==='STABLEFORD'?[stablefordTeamRow(p,0),stablefordTeamRow(p,1)]:[])}${p.format==='STABLEFORD'?'':footer}</tbody></table></div>`;}
+function stablefordTeamRow(p,side){
+ const rows=p.rounds.filter(r=>r.side===(side===0?'A':'B'));
+ const values=p.complete?(side===0?p.a:p.b):p.holes.map((h,i)=>!p.allocationPending&&rows.length===2&&rows.every(r=>Number.isInteger(r.gross[i])&&r.gross[i]>0&&Number.isFinite(r.shots))?rows.reduce((sum,r)=>sum+League.stableford(r.gross[i]-League.strokes(r.shots,+h.rank),+h.par),0):null);
+ const played=values.filter(v=>v!==null),total=p.complete?p.totals[side]:played.length?played.reduce((a,b)=>a+b,0):'—';
+ return `<tr class="scorecard-summary"><td>${esc(name(p.teams[side]))}</td>${values.map(v=>`<td>${v===null?'—':esc(v)}</td>`).join('')}<td>${esc(total)}</td></tr>`;
+}
 function liveScorecardSummary(p){
  const sides=['A','B'].map(side=>p.rounds.filter(r=>r.side===side));
  const size=p.format==='SINGLES'?1:2;
  const ready=(rows,i)=>!p.allocationPending&&rows.length===size&&rows.every(r=>Number.isInteger(r.gross[i])&&r.gross[i]>0&&Number.isFinite(r.shots));
- if(p.format==='STABLEFORD')return sides.map((rows,side)=>{
-  const values=p.holes.map((h,i)=>ready(rows,i)?rows.reduce((sum,r)=>sum+League.stableford(r.gross[i]-League.strokes(r.shots,+h.rank),+h.par),0):null);
-  const played=values.filter(v=>v!==null);const total=played.length?played.reduce((a,b)=>a+b,0):'—';
-  return `<tr class="scorecard-summary"><td>${esc(name(p.teams[side]))} · team total</td>${values.map(v=>`<td>${v===null?'—':v}</td>`).join('')}<td>${total}${played.length&&played.length<9?' (so far)':''}</td></tr>`;
- }).join('');
+ if(p.format==='STABLEFORD')return [0,1].map(side=>stablefordTeamRow(p,side)).join('');
  let lead=0,continuous=true,count=0;
  const values=p.holes.map((h,i)=>{if(!continuous||!sides.every(rows=>ready(rows,i))){continuous=false;return '—';}const net=sides.map(rows=>Math.min(...rows.map(r=>r.gross[i]-League.strokes(r.shots,+h.rank))));lead+=net[0]<net[1]?1:net[0]>net[1]?-1:0;count++;return lead>0?lead+'UP':lead<0?Math.abs(lead)+'DN':'AS';});
  const cell=v=>`<td class="${v==='—'?'':'match-'+(v.endsWith('UP')?'up':v.endsWith('DN')?'down':'square')}">${v}</td>`;
@@ -128,8 +130,7 @@ function scorecard(p){
  return `<p>${esc(p.winner?name(p.teams[p.winner==='A'?0:1])+' wins '+p.label:'Match tied')} · Allowance ${esc(p.match.allowance)}%</p>`+scorecardTable(p,matchRow)+scorecardLegend()+`<p>Strokes in parentheses = adjusted handicap minus the lowest adjusted handicap in this ${p.format==='SINGLES'?'singles match':'foursome'}. Handicap lists each hole’s stroke rank.</p><p>Match is shown from ${esc(name(p.teams[0]))}’s perspective (the first ${p.format==='SINGLES'?'player':'pair'} listed): UP = ahead, DN = behind, AS = all square. The row tracks all nine holes; the official result in Total locks when a lead exceeds the holes remaining.</p>`;
 }
 function stablefordCard(p){
- const totals=[p.a,p.b].map((values,i)=>`<tr class="scorecard-summary"><td>${esc(name(p.teams[i]))} · team total</td>${values.map(v=>`<td>${v}</td>`).join('')}<td><strong>${p.totals[i]}</strong></td></tr>`).join('');
- return `<p><strong>${esc(p.label)}</strong> · ${p.winner?esc(name(p.teams[p.winner==='A'?0:1]))+' wins':'Pair match tied'} · ${p.points.join(' – ')} standings points</p>`+scorecardTable(p,totals)+scorecardLegend()+`<p>Player rows show gross scores. Strokes in parentheses are each player’s full allowance-adjusted handicap for Stableford. Handicap lists each hole’s stroke rank. Team total rows add both players’ net Stableford points on each hole; the higher nine-hole points total wins. Allowance ${esc(p.match.allowance)}%.</p>`;
+ return `<p><strong>${esc(p.label)}</strong> · ${p.winner?esc(name(p.teams[p.winner==='A'?0:1]))+' wins':'Pair match tied'} · ${p.points.join(' – ')} standings points</p>`+scorecardTable(p,'')+scorecardLegend()+`<p>Player rows show gross scores. Strokes in parentheses are each player’s full allowance-adjusted handicap for Stableford. Handicap lists each hole’s stroke rank. Team total rows add both players’ net Stableford points on each hole; the higher nine-hole points total wins. Allowance ${esc(p.match.allowance)}%.</p>`;
 }
 function fixtureCard(f){return `<article class="card ${f.winner&&+f.week===12?'winner':''}"><div class="card-top"><span>${esc(f.id)} · ${f.complete?'Complete':'Scheduled / in progress'}</span><span>${+f.week<=10?'Team matchup':'Playoff'}</span></div><div class="match-line">${team(f.teams[0])}<strong>${f.pairs.some(p=>p.complete)?f.points[0]:'—'}</strong></div><div class="match-line">${team(f.teams[1])}<strong>${f.pairs.some(p=>p.complete)?f.points[1]:'—'}</strong></div>${f.pairs.map(p=>{const rr=data.Rounds.filter(r=>r.match===p.id);return `<details class="pair" open><summary>${date(p.match.date)} · ${esc(formatName(p.format))} · ${esc(p.id)} · ${p.complete?p.points.join(' – '):'Awaiting scores'}</summary><p>A: ${rr.filter(r=>r.side==='A').map(r=>esc(player(r.player))).join(' + ')}<br>B: ${rr.filter(r=>r.side==='B').map(r=>esc(player(r.player))).join(' + ')}</p>${scorecard(p)}</details>`;}).join('')}${+f.week>10&&f.complete&&f.points[0]===f.points[1]?`<p class="note">${f.winner?'Playoff winner: '+esc(name(f.winner))+' · '+esc(f.playoff.note):'Team points tied. Awaiting the winner of an admin-determined playoff.'}</p>`:''}</article>`;}
 let schedulePlayer='';try{schedulePlayer=localStorage.getItem('league-selected-player')||'';}catch{}

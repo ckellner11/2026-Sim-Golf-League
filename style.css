@@ -359,3 +359,8 @@ footer .connection{width:100%;justify-content:center;align-items:center;margin:8
 .scorecard td.score-hole{min-width:44px;height:54px;padding:12px 6px;text-align:center;vertical-align:middle}
 .score-cell-content{position:relative;display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;vertical-align:middle}
 .stroke-dots{position:absolute;top:-10px;left:22px;font-size:13px;line-height:12px;letter-spacing:1px;color:var(--ink);white-space:nowrap}
+
+/* Align every hole's heading, par, rank, score and summary to one centerline. */
+#view .scorecard th:not(:first-child),#view .scorecard td:not(:first-child){text-align:center;vertical-align:middle}
+#view .scorecard td.score-hole{padding:12px 6px;height:54px}
+#view .scorecard .score-cell-content{display:flex;margin:0 auto;position:relative;width:26px;height:26px;align-items:center;justify-content:center}

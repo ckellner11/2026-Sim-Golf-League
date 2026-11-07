@@ -64,13 +64,16 @@ window.LEAGUE_COURSE_MEDIA = [
     "logoLabel": "Black Desert Resort logo"
   },
   {
-    "name": "The Wilds Golf Club (CE Simgolf)",
+    "name": "The Wilds Golf Club",
     "photo": "https://www.golfthewilds.com/images/slider3/slideshow1.jpg",
     "logo": "https://www.golfthewilds.com/images/logo/logo-white-no-shadow.png",
     "source": "https://www.golfthewilds.com/",
     "credit": "The Wilds",
     "darkLogo": true,
-    "logoLabel": "The Wilds Golf Club logo"
+    "logoLabel": "The Wilds Golf Club logo",
+    "aliases": [
+      "The Wilds Golf Club (CE Simgolf)"
+    ]
   },
   {
     "name": "Pinehurst No. 10",

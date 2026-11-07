@@ -28,7 +28,7 @@ function bannerContent(){
  const hasCourse=String(w.course||'').trim()&&!/^(tbd|course tbd|to be determined)$/i.test(String(w.course).trim());
  const profile=hasCourse?published.find(c=>key(c.name)===key(w.course)):(assigned.length===1?assigned[0]:null);
  const title=hasCourse?w.course:profile?.name||'Course to be announced';
- const media=(window.LEAGUE_COURSE_MEDIA||[]).find(m=>key(m.name)===key(title));
+ const media=(window.LEAGUE_COURSE_MEDIA||[]).find(m=>[m.name,...(m.aliases||[])].some(n=>key(n)===key(title)));
  let photo='',source='';try{if(media&&new URL(media.photo).protocol==='https:')photo=media.photo;if(media&&new URL(media.source).protocol==='https:')source=media.source;}catch{}
  return `${photo?`<img class="banner-photo" src="${esc(photo)}" alt="${esc(title)}" decoding="async" referrerpolicy="no-referrer">`:''}<div class="banner-copy"><p class="eyebrow">${week===upcomingWeek()?'Up next':'Selected week'} · Week ${week}</p><h2>${esc(title)}</h2><p>${esc(formatName(w.format||'BEST_BALL'))} · ${date(w.wed)} & ${date(w.sat)}</p></div>${photo&&source?`<a class="banner-credit" href="${esc(source)}" target="_blank" rel="noopener noreferrer">Photo: ${esc(media.credit)}</a>`:''}`;
 }
@@ -50,7 +50,7 @@ function personalMatchSummary(selected,w,matchId=null){
 function matchFinder(){const selected=data.Players.find(p=>p.id===schedulePlayer),next=nextPlayerMatch(selected);return `<section class="match-finder next-match ${selected?'':'next-match-empty'}"><div class="next-match-title">${selected?'<h2>Your next match</h2>':''}<label for="find-player">${selected?'Player':'Your next match'}</label><select id="find-player"><option value="">Choose your name</option>${[...data.Players].sort((a,b)=>a.name.localeCompare(b.name)).map(p=>`<option value="${esc(p.id)}" ${p.id===schedulePlayer?'selected':''}>${esc(p.name)}</option>`).join('')}</select></div>${selected?`${playerIdentity(selected)}${next?personalMatchSummary(selected,next.w,next.m.id??null)+`<a href="#schedule/${next.w.week}">View week ${next.w.week} →</a>`:'<p class="notice notice-info">No upcoming dated match assigned. Check My schedule for pending assignments.</p>'}<a href="#my-schedule">My full season →</a>`:''}</section>`;}
 function courseMedia(c){
  const key=v=>String(v||'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/[^a-z0-9]/g,'');
- const entry=(window.LEAGUE_COURSE_MEDIA||[]).find(m=>key(m.name)===key(c.name));if(!entry)return '';
+ const entry=(window.LEAGUE_COURSE_MEDIA||[]).find(m=>[m.name,...(m.aliases||[])].some(n=>key(n)===key(c.name)));if(!entry)return '';
  const safe=v=>{try{const u=new URL(v);return u.protocol==='https:'?u.href:'';}catch{return '';}};
  const photo=safe(entry.photo),logo=safe(entry.logo),source=safe(entry.source);
  return `${photo?`<figure class="course-photo"><img src="${esc(photo)}" alt="${esc(c.name)}${c.name==='The Old Game'?' GSPro showcase':' course view'}" loading="lazy" decoding="async" referrerpolicy="no-referrer"><figcaption>${source?`<a href="${esc(source)}" target="_blank" rel="noopener noreferrer">${esc(entry.credit||'Image source')}</a>`:esc(entry.credit||'')}</figcaption></figure>`:''}${logo?`<div class="course-logo ${entry.darkLogo?'course-logo-dark':''}"><img src="${esc(logo)}" alt="${esc(entry.logoLabel||c.name+' logo')}" loading="lazy" decoding="async" referrerpolicy="no-referrer"></div>`:''}`;

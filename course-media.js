@@ -19,7 +19,7 @@ window.LEAGUE_COURSE_MEDIA = [
     "logoLabel": "Pine Valley Golf Club logo"
   },
   {
-    "name": "TPC Sawgrass — THE PLAYERS Stadium Course",
+    "name": "TPC Sawgrass \u2014 THE PLAYERS Stadium Course",
     "photo": "https://assets.simpleviewinc.com/simpleview/image/upload/c_fill%2Cf_webp%2Ch_500%2Cq_55%2Cw_1170/v1/clients/visitflorida/0014000000lHVFbAAO04082014125953525_cabf8dd9-d6ff-42c3-ad5c-a0f408b698e7.jpg",
     "logo": "https://cdn.cookielaw.org/logos/90140a3f-c2e1-44aa-b1a3-0eefbfd83edf/9c14de9e-9717-4931-b060-3d5897dfe06d/bdf97a1f-f3c1-404d-bdfe-4434f11f1766/TPC_Mark_rgb.png",
     "source": "https://www.visitflorida.com/travel-ideas/articles/hardest-golf-hole-in-the-world-tpc-sawgrass/",
@@ -55,16 +55,16 @@ window.LEAGUE_COURSE_MEDIA = [
     "logoLabel": "Old Kinderhook logo"
   },
   {
-    "name": "The Quarry Golf Course",
-    "photo": "https://quarrygolf.com/wp-content/uploads/2025/03/Quarry-Aerial-2-scaled-1-1-1.jpg",
-    "logo": "https://quarrygolf.com/wp-content/uploads/2024/12/cropped-Logo-Transparent-120x146.png",
-    "source": "https://quarrygolf.com/",
-    "credit": "The Quarry",
+    "name": "Black Desert Resort",
+    "photo": "https://morning-read.brightspotcdn.com/dims4/default/d0671d9/2147483647/strip/true/crop/1630x1067%2B0%2B0/resize/840x550%21/quality/90/?url=http%3A%2F%2Fmorning-read-brightspot.s3.amazonaws.com%2F4f%2F50%2Fa8e8767a40bf80299b02aa881bc1%2Fblack-desert-resort-gc-photo-by-brian-oar.jpg",
+    "logo": "",
+    "source": "https://www.firstcallgolf.com/design-notes/feature/2023-06-26/tom-weiskopfs-final-design-opens-for-play-utahs-black-desert-resort",
+    "credit": "Brian Oar / The First Call",
     "darkLogo": false,
-    "logoLabel": "The Quarry Golf Course logo"
+    "logoLabel": "Black Desert Resort logo"
   },
   {
-    "name": "The Wilds Golf Club",
+    "name": "The Wilds Golf Club (CE Simgolf)",
     "photo": "https://www.golfthewilds.com/images/slider3/slideshow1.jpg",
     "logo": "https://www.golfthewilds.com/images/logo/logo-white-no-shadow.png",
     "source": "https://www.golfthewilds.com/",
@@ -86,7 +86,7 @@ window.LEAGUE_COURSE_MEDIA = [
     "photo": "https://i.ytimg.com/vi/NRw8w4qV48E/maxresdefault.jpg",
     "logo": "",
     "source": "https://www.youtube.com/watch?v=NRw8w4qV48E&t=233s",
-    "credit": "GSPro showcase thumbnail · YouTube",
+    "credit": "GSPro showcase thumbnail \u00b7 YouTube",
     "darkLogo": false,
     "logoLabel": "The Old Game logo"
   },
@@ -100,12 +100,12 @@ window.LEAGUE_COURSE_MEDIA = [
     "logoLabel": "The Bull at Pinehurst Farms logo"
   },
   {
-    "name": "The Federal Club",
-    "photo": "https://www.thefederalclub.com/wp-content/uploads/sites/8795/2023/03/Hole-1.jpg",
-    "logo": "https://www.thefederalclub.com/wp-content/uploads/sites/8795/2023/03/TFC-Logo.png",
-    "source": "https://www.thefederalclub.com/course-details/",
-    "credit": "The Federal Club",
+    "name": "Pebble Beach Golf Links",
+    "photo": "https://res.cloudinary.com/pgatour-prod/image/fetch/h_900%2Cw_1600%2Cc_fit/https%3A/cf-images.us-east-1.prod.boltdns.net/v1/static/6082840763001/2c65d23d-aa96-4f59-99e4-439e4a1db145/4a88fc5d-bd6c-423e-af8f-530f3c0d164b/1600x900/match/image.jpg",
+    "logo": "",
+    "source": "https://www.pgatour.com/video/shows/6346367804112/a-look-at-the-historic-18th-hole-at-pebble-beach-golf-links",
+    "credit": "PGA TOUR \u00b7 Pebble Beach 18th hole",
     "darkLogo": false,
-    "logoLabel": "The Federal Club logo"
+    "logoLabel": "Pebble Beach Golf Links logo"
   }
 ];

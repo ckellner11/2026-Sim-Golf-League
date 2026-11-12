@@ -221,3 +221,17 @@ window.addEventListener('resize',updateNavOffset);
 if(document.fonts?.ready)document.fonts.ready.then(updateNavOffset);
 document.addEventListener('click',e=>{const a=e.target.closest('a[href^="#"]');if(!a||a.hash==='#content')return;e.preventDefault();history.pushState(null,'',a.hash==='#schedule'?'#schedule/'+week:a.hash);document.querySelector('.nav-more')?.removeAttribute('open');render();$('view').focus({preventScroll:true});$('view').scrollIntoView({block:'start',behavior:'instant'});});
 window.addEventListener('hashchange',render);window.addEventListener('popstate',render);restoreCache();load();
+
+// Scroll only after a visitor expands a scorecard, not after live refreshes.
+document.addEventListener('click',event=>{
+ const summary=event.target.closest?.('.schedule-scorecard > summary');
+ if(!summary||event.defaultPrevented)return;
+ const card=summary.parentElement;
+ requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  if(!card.isConnected||!card.open)return;
+  const nav=document.querySelector('.site-nav');
+  const offset=(nav?nav.getBoundingClientRect().height:0)+12;
+  const top=Math.max(0,window.scrollY+card.getBoundingClientRect().top-offset);
+  window.scrollTo({top,behavior:window.matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
+ }));
+});

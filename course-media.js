@@ -110,5 +110,16 @@ window.LEAGUE_COURSE_MEDIA = [
     "credit": "PGA TOUR \u00b7 Pebble Beach 18th hole",
     "darkLogo": false,
     "logoLabel": "Pebble Beach Golf Links logo"
+  },
+  {
+    "name": "The River Club",
+    "aliases": [
+      "River Club"
+    ],
+    "photo": "https://gngcd.com/wp-content/uploads/2025/06/1-2x-56.jpg",
+    "logo": "",
+    "source": "https://gngcd.com/courses/river-club/",
+    "credit": "Greg Norman Golf Course Design",
+    "darkLogo": false
   }
 ];

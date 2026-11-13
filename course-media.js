@@ -37,15 +37,6 @@ window.LEAGUE_COURSE_MEDIA = [
     "logoLabel": "Augusta National Golf Club logo"
   },
   {
-    "name": "Raspberry Falls Golf & Hunt Club",
-    "photo": "https://www.raspberryfalls.com/images/widgetkit/course/course1.jpg",
-    "logo": "https://www.raspberryfalls.com/images/logo/logo-web.png",
-    "source": "https://www.raspberryfalls.com/golf/course",
-    "credit": "Raspberry Falls",
-    "darkLogo": false,
-    "logoLabel": "Raspberry Falls Golf & Hunt Club logo"
-  },
-  {
     "name": "Old Kinderhook",
     "photo": "https://oldkinderhook.com/wp-content/uploads/2018/07/old-kinderhook-golf-hole-by-hole-hero2.jpg",
     "logo": "https://oldkinderhook.com/wp-content/uploads/2018/06/old-kinderhook-web-logo.png",
@@ -120,6 +111,18 @@ window.LEAGUE_COURSE_MEDIA = [
     "logo": "",
     "source": "https://gngcd.com/courses/river-club/",
     "credit": "Greg Norman Golf Course Design",
+    "darkLogo": false
+  },
+  {
+    "name": "Shadow Ridge Country Club",
+    "aliases": [
+      "Shadow Ridge CC",
+      "Shadow Ridge"
+    ],
+    "photo": "https://shadowridgecountryclub.com/wp-content/uploads/2024/08/ShadowRidgeCCHole12DJI_0912-Edit-crop-scaled-2200x850.jpg.1200w.webp",
+    "logo": "",
+    "source": "https://shadowridgecountryclub.com/golf/",
+    "credit": "Shadow Ridge Country Club",
     "darkLogo": false
   }
 ];

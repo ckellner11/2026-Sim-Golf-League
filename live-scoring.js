@@ -1,6 +1,6 @@
 /* Admin UI stores credentials in memory only. Server authorizes every write. */
 window.LiveScoring=(()=>{
- let session=null,client=null,dialog=null,active=null,hole=1,dirty=false,saving=false;
+ let session=null,client=null,dialog=null,active=null,hole=1,dirty=false,saving=false,openRequest=0;
  const configured=()=>window.LEAGUE_SCORING?.enabled&&window.LEAGUE_SCORING.clientId;
  const authorized=()=>session&&session.expires>Date.now();
  async function request(body){
@@ -45,14 +45,26 @@ window.LiveScoring=(()=>{
  }
  async function open(id){
   if(!authorized()){status('Please sign in again.',true);decorate();return;}
-  if(loading){status('The schedule is refreshing. Please try opening the match again in a moment.');return;}
-  await load();
-  active=model.results.find(p=>p.id===id);if(!active){status('Match not found. Refresh the schedule.',true);return;}
-  const setup=scorecardSetup(active);if(setup.error||setup.allocationPending){status(setup.error||setup.allocationMessage,true);return;}
+  const ticket=++openRequest;
   if(!dialog){dialog=document.createElement('dialog');dialog.className='live-dialog';dialog.setAttribute('aria-label','Enter match scores');document.body.append(dialog);dialog.addEventListener('cancel',e=>{e.preventDefault();close();});}
-  hole=setup.holes.findIndex((h,i)=>setup.rounds.some(r=>r.gross[i]===''))+1;if(hole===0)hole=1;dirty=false;draw();dialog.showModal();
+  dirty=false;
+  dialog.innerHTML='<button class="live-close" aria-label="Close score entry">Close</button><h2>Live scoring</h2><p role="status">Loading the latest scores…</p>';
+  dialog.querySelector('.live-close').onclick=close;
+  if(!dialog.open)dialog.showModal();
+  // Reuse only a recent successful network read, never a restored browser cache.
+  if(loading||!lastFreshLeagueAt||Date.now()-lastFreshLeagueAt>30000){
+   const ok=await load();
+   if(ticket!==openRequest||!dialog.open)return;
+   if(!ok){dialog.querySelector('[role="status"]').textContent='Could not refresh scores. Close this window and try again. Score entry is unavailable until fresh data loads.';return;}
+  }
+  if(ticket!==openRequest||!dialog.open)return;
+  active=model.results.find(p=>p.id===id);
+  const setup=active?scorecardSetup(active):{error:'Match not found. Refresh the schedule.'};
+  if(setup.error||setup.allocationPending){dialog.querySelector('[role="status"]').textContent=setup.error||setup.allocationMessage;return;}
+  hole=setup.holes.findIndex((h,i)=>setup.rounds.some(r=>r.gross[i]===''))+1;if(hole===0)hole=1;draw();
  }
- function close(){if(saving)return;if(dirty&&!confirm('Discard the unsaved scores for this hole?'))return;dirty=false;dialog.close();load();}
+
+ function close(){if(saving)return;if(dirty&&!confirm('Discard the unsaved scores for this hole?'))return;dirty=false;openRequest++;dialog.close();load();}
  function draw(){
   const p=scorecardSetup(active),h=p.holes[hole-1],w=data.Weeks.find(w=>+w.week===+active.match.week);
   dialog.innerHTML=`<button class="live-close" aria-label="Close score entry">Close</button><p>Week ${esc(w.week)} · ${esc(date(active.match.date))} · ${esc(matchTime(active.match,w))}</p><h2>Live scoring</h2><p>${esc(formatName(p.format))}</p><div class="live-total"></div><p class="live-summary" aria-live="polite"></p><div class="live-hole-nav"><button id="score-prev" ${hole===1?'disabled':''} aria-label="Previous hole">‹</button><strong>Hole ${esc(h.courseHole||h.hole)} · Par ${esc(h.par)} · Rank ${esc(h.rank)}</strong><button id="score-next" ${hole===9?'disabled':''} aria-label="Next hole">›</button></div><div class="live-inputs">${p.rounds.map(r=>`<label class="live-input-row"><span>${esc(player(r.player))}<small> ${League.strokes(r.shots,+h.rank)} stroke(s)</small></span><input type="number" min="1" max="30" step="1" inputmode="numeric" data-player="${esc(r.player)}" aria-label="${esc(player(r.player))} gross score" value="${esc(r.gross[hole-1])}"><span class="live-points" data-points="${esc(r.player)}"></span></label>`).join('')}</div><button class="live-save">${hole===9?'Save hole':'Save & next hole'}</button><p class="live-save-status" role="status">Enter gross scores; nothing is saved until you press Save.</p>`;

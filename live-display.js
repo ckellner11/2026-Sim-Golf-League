@@ -1,18 +1,20 @@
+function matchResultLabel(value){return String(value||'').replace(/\s*&\s*/g,'&').replace(/\bup\b/gi,'UP').replace(/^All square$/i,'AS');}
+function lowNetToPar(p){if(!p.kept.length)return '—';const n=p.kept.reduce((sum,r)=>sum+r.net-(r.gross-r.raw),0);return n===0?'E':n>0?'+'+n:String(n);}
 /* Read-only match previews. Official standings remain in the unchanged engine. */
 function matchLiveTotals(result){
  const p=scorecardSetup(result);if(p.error||p.allocationPending)return {played:0,values:['—','—']};
  const sides=['A','B'].map(side=>p.rounds.filter(r=>r.side===side));
- let played=0,lead=0,totals=[0,0],continuous=true;
+ let played=0,lead=0,totals=[0,0],continuous=true,finish=null;
  for(let i=0;i<p.holes.length;i++){
   const ready=sides.every(rows=>rows.length&&rows.every(r=>Number.isInteger(r.gross[i])&&Number.isFinite(r.shots)));
   if(!ready){continuous=false;continue;}
   if(p.format!=='STABLEFORD'&&!continuous)continue;
   played++;const h=p.holes[i];
   if(p.format==='STABLEFORD')sides.forEach((rows,j)=>totals[j]+=rows.reduce((sum,r)=>sum+League.stableford(r.gross[i]-League.strokes(r.shots,+h.rank),+h.par),0));
-  else {const net=sides.map(rows=>Math.min(...rows.map(r=>r.gross[i]-League.strokes(r.shots,+h.rank))));lead+=net[0]<net[1]?1:net[0]>net[1]?-1:0;}
+  else {const net=sides.map(rows=>Math.min(...rows.map(r=>r.gross[i]-League.strokes(r.shots,+h.rank))));lead+=net[0]<net[1]?1:net[0]>net[1]?-1:0;if(!finish&&Math.abs(lead)>p.holes.length-i-1)finish={winner:lead>0?'A':'B',label:(p.holes.length-i-1)?Math.abs(lead)+'&'+(p.holes.length-i-1):Math.abs(lead)+' UP'};}
  }
  const label=n=>n>0?n+' UP':n<0?Math.abs(n)+' DN':'AS';
- return {played,values:played?(p.format==='STABLEFORD'?totals:p.complete?[p.winner==='A'?p.label:p.winner?'Loss':'AS',p.winner==='B'?p.label:p.winner?'Loss':'AS']:[label(lead),label(-lead)]):['—','—']};
+ return {played,decided:!!finish,winner:finish?.winner,label:finish?.label,values:played?(p.format==='STABLEFORD'?totals:finish?['A','B'].map(side=>side===finish.winner?finish.label:'Loss'):[label(lead),label(-lead)]):['—','—']};
 }
 function mobileScorecard(p){
  const rounds=[...p.rounds].sort((a,b)=>a.side.localeCompare(b.side));

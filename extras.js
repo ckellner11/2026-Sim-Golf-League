@@ -6,7 +6,15 @@ const yes=v=>v===true||String(v).toLowerCase()==='true'||String(v).toLowerCase()
 const sum=a=>a.reduce((s,v)=>s+v,0),mean=a=>sum(a)/a.length;
 const median=a=>{const s=[...a].sort((a,b)=>a-b),i=Math.floor(s.length/2);return s.length%2?s[i]:(s[i-1]+s[i])/2;};
 const config=d=>Object.fromEntries((d.HandicapConfig||[]).map(x=>[x.key,x.value]));
-function index(values){const v=values.slice(-6);if(!v.length)return null;const best=[...v].sort((a,b)=>a-b).slice(0,Math.ceil(v.length/2));return {count:v.length,average:mean(v),best:mean(best),base:.75*mean(v)+.25*mean(best)};}
+function index(values){
+ const v=values.slice(-7);if(!v.length)return null;
+ const count=v.length,keptCount=count<3?0:count===3?2:count===4?3:count<=6?4:5;
+ const selected=v.map((value,i)=>({value,i})).sort((a,b)=>a.value-b.value||a.i-b.i).slice(0,keptCount),best=selected.map(r=>r.value);
+ return {count,keptCount,selected:selected.map(r=>r.i),average:mean(v),best:best.length?mean(best):null,base:best.length?mean(best):null,held:count<3};
+}
+function handicapTarget(calc,zero){return !calc||calc.held||!Number.isFinite(zero)?null:Math.max(0,Math.round(Math.max(0,calc.base-zero)+1e-9));}
+function nextHandicap(current,calc,zero,frozen){const target=handicapTarget(calc,zero);return frozen||target===null?current:Math.max(0,Math.min(current+1,Math.max(current-2,target)));}
+
 function latest(rows,key){const m=new Map();for(const r of rows){const k=key(r);if(!m.has(k)||+r.revision>+m.get(k).revision)m.set(k,r);}return [...m.values()];}
 function handicaps(d){
  const c=config(d),zero=number(c.zeroReference),approved=yes(c.approved),history=d.HandicapHistory||[],overrides=d.HandicapOverrides||[];
@@ -17,22 +25,22 @@ function handicaps(d){
   const own=currentRows.filter(h=>h.player===s.player&&yes(h.eligible));
   const historical=own.filter(h=>+h.season===2025).sort((a,b)=>a.sequence-b.sequence);
   for(const h of historical){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(Number.isFinite(adjusted))window.push({...h,adjusted});}
-  window=window.slice(-6);
+  window=window.slice(-7);
   const applied=new Set();
   function applyOverrides(week){for(const o of overrides.filter(o=>o.player===s.player&&+o.afterWeek<=week).sort((a,b)=>a.afterWeek-b.afterWeek||String(a.id).localeCompare(String(b.id)))){if(applied.has(o.id))continue;if(!Number.isInteger(number(o.value))||o.value<0||empty(o.reason))continue;steps.push({type:'override',week:+o.afterWeek,before:current,after:+o.value,reason:o.reason,id:o.id});current=+o.value;applied.add(o.id);}}
   applyOverrides(0);
   for(const w of weeks){
    const rr=own.filter(h=>+h.season!==2025&&+h.week===+w.week).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-   for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-6);const calc=index(window.map(x=>x.adjusted));const target=Number.isFinite(zero)?Math.max(0,Math.round(Math.max(0,calc.base-zero)*.90)):null;
+   for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-7);const calc=index(window.map(x=>x.adjusted));const target=handicapTarget(calc,zero);
     const frozen=+h.week>10&&!yes(c.resumePlayoffUpdates);const before=current;
     if(approved&&hasInitial&&target!==null&&!frozen)current=Math.max(0,Math.min(before+1,Math.max(before-2,target)));
-    steps.push({type:'round',id:h.id,week:+h.week,raw:+h.raw,difficulty:+h.difficulty,adjusted,...calc,target,before,after:current,frozen,revision:+h.revision});
+    steps.push({type:'round',id:h.id,week:+h.week,raw:+h.raw,difficulty:+h.difficulty,adjusted,...calc,target,before,after:current,frozen,reason:calc.held?'Starting handicap held until three eligible rounds':undefined,revision:+h.revision});
    }applyOverrides(+w.week);
   }
   // Overrides are explicit current adjustments, including ones entered before a future week.
   applyOverrides(Math.max(0,...weeks.map(w=>+w.week)));
   const calc=index(window.map(x=>x.adjusted));
-  return {player:s.player,name:s.name,tee:s.tee,initial:number(s.initial),current:hasInitial?current:null,approved,provisional:!calc||calc.count<6,zeroReference:Number.isFinite(zero)?zero:null,calculation:calc,expectation:calc?calc.average:null,reliable:!!calc&&calc.count>=Number(c.reliableRounds||3),window,steps};
+  return {player:s.player,name:s.name,tee:s.tee,initial:number(s.initial),current:hasInitial?current:null,approved,provisional:!calc||calc.count<7,zeroReference:Number.isFinite(zero)?zero:null,calculation:calc,expectation:window.length?mean(window.slice(-6).map(r=>r.adjusted)):null,reliable:!!calc&&calc.count>=Number(c.reliableRounds||3),window,steps};
  });
 }
 function individualRounds(d){
@@ -121,6 +129,6 @@ function skins(d){
   if(!complete){carryKnown=false;carry=0;}else if(total===0){if(carryKnown)carry=pot;}else{carry=0;carryKnown=true;}
  }return result;
 }
-root.LeagueExtras={index,median,handicaps,individualRounds,weekDraft,awards,skins,config};
+root.LeagueExtras={index,handicapTarget,nextHandicap,median,handicaps,individualRounds,weekDraft,awards,skins,config};
 if(typeof module!=='undefined')module.exports=root.LeagueExtras;
 })(typeof window==='undefined'?globalThis:window);

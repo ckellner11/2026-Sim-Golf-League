@@ -39,6 +39,6 @@ function estimatedNextHandicap(h){
  const c=LeagueExtras.config(data),zero=Number(c.zeroReference);
  if(c.zeroReference===''||c.zeroReference==null||!Number.isFinite(zero))return null;
  let current=h.current,window=h.window.map(r=>r.adjusted);
- for(const r of pending){window.push(r.raw);window=window.slice(-6);const calc=LeagueExtras.index(window);const target=Math.max(0,Math.round(Math.max(0,calc.base-zero)*.9));if(r.week<=10||String(c.resumePlayoffUpdates).toLowerCase()==='true')current=Math.max(0,Math.min(current+1,Math.max(current-2,target)));}
+ for(const r of pending){window.push(r.raw);window=window.slice(-7);const calc=LeagueExtras.index(window);current=LeagueExtras.nextHandicap(current,calc,zero,r.week>10&&String(c.resumePlayoffUpdates).toLowerCase()!=='true');}
  return current;
 }

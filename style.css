@@ -403,3 +403,6 @@ html:not([data-text-size="standard"]) .mobile-scorecard table{table-layout:auto}
 @container(max-width:32rem){.award-row{grid-template-columns:1.5rem minmax(0,1fr) auto;gap:.6rem}.award-player{grid-column:2/4}.award-result{grid-column:2;text-align:left}.award-prize{grid-column:3;align-self:start}}
 
 .skin-score-pair{display:flex;flex-wrap:wrap;align-items:flex-start;gap:1rem 1.5rem}.skin-score-value{display:flex;flex-direction:column;align-items:flex-start;gap:.5rem;min-width:3.5rem;flex:1}.skin-score-value>span{font-size:.875rem;color:var(--muted);font-weight:700}.skin-score-value small{font-size:.875rem;text-transform:capitalize;overflow-wrap:anywhere}.skin-gross-leader{display:block;white-space:normal;line-height:2.2;margin:.25rem 0}.skins-individual th:nth-child(5),.skins-individual td:nth-child(5){text-align:left;white-space:normal;min-width:9rem}
+
+/* Each match occupies one grid cell, regardless of shared or different dates. */
+.schedule-match-grid{align-items:stretch}.schedule-match-grid>.schedule-match{margin-bottom:0;height:100%}.schedule-card-date{font-family:inherit;font-size:1.125rem;line-height:1.4;background:var(--surface-alt);padding:.75rem 1rem;border-radius:8px;margin:0 0 1rem;overflow-wrap:anywhere}.schedule-match-grid .schedule-scorecard{margin-top:auto;padding-top:1rem}

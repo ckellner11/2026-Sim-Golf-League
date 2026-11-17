@@ -415,3 +415,7 @@ html:not([data-text-size="standard"]) .mobile-scorecard table{table-layout:auto}
 .skins-breakdown tr.skin-hole-leading>td{background:var(--surface-alt)}
 .skins-breakdown tr.skin-hole-leading>td:first-child{background:var(--surface-alt);box-shadow:inset 3px 0 var(--line)}
 .skin-outcome{display:inline-block;font-weight:700;white-space:normal;min-width:6rem;line-height:1.5}.skin-hole-won .skin-outcome{border:1px solid var(--win-line);border-radius:6px;padding:.25rem .5rem}.skin-hole-names strong{font-size:1rem}
+
+/* Single-column views read chronologically, while desktop fills down columns. */
+.schedule-match-grid:has(.schedule-scorecard[open])>.schedule-match{order:var(--schedule-order)}
+@media(max-width:700px){.schedule-match-grid>.schedule-match{order:var(--schedule-order)}}

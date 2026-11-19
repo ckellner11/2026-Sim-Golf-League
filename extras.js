@@ -12,8 +12,8 @@ function index(values){
  const selected=v.map((value,i)=>({value,i})).sort((a,b)=>a.value-b.value||a.i-b.i).slice(0,keptCount),best=selected.map(r=>r.value);
  return {count,keptCount,selected:selected.map(r=>r.i),average:mean(v),best:best.length?mean(best):null,base:best.length?mean(best):null,held:count<3};
 }
-function handicapTarget(calc,zero){return !calc||calc.held||!Number.isFinite(zero)?null:Math.max(0,Math.round(Math.max(0,calc.base-zero)+1e-9));}
-function nextHandicap(current,calc,zero,frozen){const target=handicapTarget(calc,zero);return frozen||target===null?current:Math.max(0,Math.min(current+1,Math.max(current-2,target)));}
+function handicapTarget(calc,zero){return !calc||calc.held||!Number.isFinite(zero)?null:Math.round(calc.base-zero+1e-9);}
+function nextHandicap(current,calc,zero,frozen){const target=handicapTarget(calc,zero);return frozen||target===null?current:Math.min(current+1,Math.max(current-2,target));}
 
 function latest(rows,key){const m=new Map();for(const r of rows){const k=key(r);if(!m.has(k)||+r.revision>+m.get(k).revision)m.set(k,r);}return [...m.values()];}
 function handicaps(d){
@@ -21,19 +21,19 @@ function handicaps(d){
  const weeks=latest(d.HandicapWeeks||[],r=>+r.week).sort((a,b)=>a.week-b.week);
  const currentRows=history.filter(h=>+h.season===2025||weeks.some(w=>+w.week===+h.week&&+w.revision===+h.revision));
  return (d.HandicapSeeds||[]).filter(s=>!empty(s.player)).map(s=>{
-  let current=number(s.initial),window=[],steps=[];const hasInitial=Number.isInteger(current)&&current>=0;
+  let current=number(s.initial),window=[],steps=[];const hasInitial=Number.isInteger(current);
   const own=currentRows.filter(h=>h.player===s.player&&yes(h.eligible));
   const historical=own.filter(h=>+h.season===2025).sort((a,b)=>a.sequence-b.sequence);
   for(const h of historical){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(Number.isFinite(adjusted))window.push({...h,adjusted});}
   window=window.slice(-7);
   const applied=new Set();
-  function applyOverrides(week){for(const o of overrides.filter(o=>o.player===s.player&&+o.afterWeek<=week).sort((a,b)=>a.afterWeek-b.afterWeek||String(a.id).localeCompare(String(b.id)))){if(applied.has(o.id))continue;if(!Number.isInteger(number(o.value))||o.value<0||empty(o.reason))continue;steps.push({type:'override',week:+o.afterWeek,before:current,after:+o.value,reason:o.reason,id:o.id});current=+o.value;applied.add(o.id);}}
+  function applyOverrides(week){for(const o of overrides.filter(o=>o.player===s.player&&+o.afterWeek<=week).sort((a,b)=>a.afterWeek-b.afterWeek||String(a.id).localeCompare(String(b.id)))){if(applied.has(o.id))continue;if(!Number.isInteger(number(o.value))||empty(o.reason))continue;steps.push({type:'override',week:+o.afterWeek,before:current,after:+o.value,reason:o.reason,id:o.id});current=+o.value;applied.add(o.id);}}
   applyOverrides(0);
   for(const w of weeks){
    const rr=own.filter(h=>+h.season!==2025&&+h.week===+w.week).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
-   for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-7);const calc=index(window.map(x=>x.adjusted));const target=handicapTarget(calc,zero);
+   for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-7);const calc=index(window.map(x=>x.adjusted));const rawTarget=handicapTarget(calc,zero),plusEnabled=yes(c.allowPlusHandicaps)&&+w.week>=Number(c.plusHandicapsFromWeek||1),target=rawTarget===null?null:plusEnabled?rawTarget:Math.max(0,rawTarget);
     const frozen=+h.week>10&&!yes(c.resumePlayoffUpdates);const before=current;
-    if(approved&&hasInitial&&target!==null&&!frozen)current=Math.max(0,Math.min(before+1,Math.max(before-2,target)));
+    if(approved&&hasInitial&&target!==null&&!frozen)current=plusEnabled?Math.min(before+1,Math.max(before-2,target)):Math.max(0,Math.min(before+1,Math.max(before-2,target)));
     steps.push({type:'round',id:h.id,week:+h.week,raw:+h.raw,difficulty:+h.difficulty,adjusted,...calc,target,before,after:current,frozen,reason:calc.held?'Starting handicap held until three eligible rounds':undefined,revision:+h.revision});
    }applyOverrides(+w.week);
   }
@@ -56,7 +56,7 @@ function individualRounds(d){
 function weekDraft(d,week){
  const c=config(d),w=d.Weeks.find(w=>+w.week===+week);if(!w||w.format==='SCRAMBLE')throw Error('Scramble scores cannot update individual handicaps.');
  const rr=individualRounds(d).filter(r=>r.week===+week);if(rr.length!==16||new Set(rr.map(r=>r.player)).size!==16)throw Error('Complete all 16 individual nine-hole scorecards before finalizing this week.');
- const eligible=rr.filter(r=>r.eligible);if(eligible.some(r=>!Number.isInteger(r.hcp)||r.hcp<0))throw Error('Freeze the handicap used for each eligible scorecard before finalizing.');
+ const eligible=rr.filter(r=>r.eligible);if(eligible.some(r=>!Number.isInteger(r.hcp)))throw Error('Freeze the handicap used for each eligible scorecard before finalizing.');
  const expectations=eligible.filter(r=>Number.isFinite(r.expected));const minimum=Number(c.minimumField||6);
  const difficulty=expectations.length>=minimum?Math.max(-3,Math.min(3,median(expectations.map(r=>r.raw-r.expected)))):0;
  return {week:+week,difficulty,field:expectations.length,reason:expectations.length>=minimum?'Median deviation, capped at ±3':'Fewer than '+minimum+' reliable expectations: adjustment is zero',rounds:eligible};

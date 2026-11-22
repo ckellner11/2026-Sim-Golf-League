@@ -13,7 +13,7 @@ function index(values){
  return {count,keptCount,selected:selected.map(r=>r.i),average:mean(v),best:best.length?mean(best):null,base:best.length?mean(best):null,held:count<3};
 }
 function handicapTarget(calc,zero){return !calc||calc.held||!Number.isFinite(zero)?null:Math.round(calc.base-zero+1e-9);}
-function nextHandicap(current,calc,zero,frozen){const target=handicapTarget(calc,zero);return frozen||target===null?current:Math.min(current+1,Math.max(current-2,target));}
+function nextHandicap(current,calc,zero,frozen,riseLimit=2){const target=handicapTarget(calc,zero);return frozen||target===null?current:Math.min(current+riseLimit,Math.max(current-2,target));}
 
 function latest(rows,key){const m=new Map();for(const r of rows){const k=key(r);if(!m.has(k)||+r.revision>+m.get(k).revision)m.set(k,r);}return [...m.values()];}
 function handicaps(d){
@@ -32,8 +32,8 @@ function handicaps(d){
   for(const w of weeks){
    const rr=own.filter(h=>+h.season!==2025&&+h.week===+w.week).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
    for(const h of rr){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(!Number.isFinite(adjusted))continue;window.push({...h,adjusted});window=window.slice(-7);const calc=index(window.map(x=>x.adjusted));const rawTarget=handicapTarget(calc,zero),plusEnabled=yes(c.allowPlusHandicaps)&&+w.week>=Number(c.plusHandicapsFromWeek||1),target=rawTarget===null?null:plusEnabled?rawTarget:Math.max(0,rawTarget);
-    const frozen=+h.week>10&&!yes(c.resumePlayoffUpdates);const before=current;
-    if(approved&&hasInitial&&target!==null&&!frozen)current=plusEnabled?Math.min(before+1,Math.max(before-2,target)):Math.max(0,Math.min(before+1,Math.max(before-2,target)));
+    const frozen=+h.week>10&&!yes(c.resumePlayoffUpdates);const before=current,riseLimit=+w.week>=Number(c.twoStrokeFromWeek||Infinity)?2:1;
+    if(approved&&hasInitial&&target!==null&&!frozen)current=plusEnabled?Math.min(before+riseLimit,Math.max(before-2,target)):Math.max(0,Math.min(before+riseLimit,Math.max(before-2,target)));
     steps.push({type:'round',id:h.id,week:+h.week,raw:+h.raw,difficulty:+h.difficulty,adjusted,...calc,target,before,after:current,frozen,reason:calc.held?'Starting handicap held until three eligible rounds':undefined,revision:+h.revision});
    }applyOverrides(+w.week);
   }

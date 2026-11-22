@@ -428,3 +428,6 @@ html:not([data-text-size="standard"]) .mobile-scorecard table{table-layout:auto}
 .player-history .table-wrap{margin-top:14px}.player-history p{font-size:1rem}
 .scorecard-page-notes{margin-top:32px;border-top:1px solid var(--line);padding:18px 0;color:var(--muted)}
 .scorecard-page-notes summary{cursor:pointer;font-weight:700}.teams-handicaps>.card{min-width:0}
+
+.upcoming-handicap{margin-top:20px;padding-top:16px;border-top:1px solid var(--line)}
+.upcoming-handicap h4{margin-top:0}.upcoming-handicap p{overflow-wrap:anywhere}

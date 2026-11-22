@@ -27,7 +27,7 @@ function handicaps(d){
   for(const h of historical){const adjusted=number(h.raw)-number(h.difficulty)+number(h.teeAdjustment);if(Number.isFinite(adjusted))window.push({...h,adjusted});}
   window=window.slice(-7);
   const applied=new Set();
-  function applyOverrides(week){for(const o of overrides.filter(o=>o.player===s.player&&+o.afterWeek<=week).sort((a,b)=>a.afterWeek-b.afterWeek||String(a.id).localeCompare(String(b.id)))){if(applied.has(o.id))continue;if(!Number.isInteger(number(o.value))||empty(o.reason))continue;steps.push({type:'override',week:+o.afterWeek,before:current,after:+o.value,reason:o.reason,id:o.id});current=+o.value;applied.add(o.id);}}
+  function applyOverrides(week){for(const o of overrides.filter(o=>o.player===s.player&&+o.afterWeek<=week).sort((a,b)=>a.afterWeek-b.afterWeek||Number(String(b.id).startsWith('five-seven-transition-'))-Number(String(a.id).startsWith('five-seven-transition-'))||String(a.createdAt||a.id).localeCompare(String(b.createdAt||b.id)))){if(applied.has(o.id))continue;if(!Number.isInteger(number(o.value))||empty(o.reason))continue;steps.push({type:'override',week:+o.afterWeek,before:current,after:+o.value,reason:o.reason,id:o.id});current=+o.value;applied.add(o.id);}}
   applyOverrides(0);
   for(const w of weeks){
    const rr=own.filter(h=>+h.season!==2025&&+h.week===+w.week).sort((a,b)=>String(a.id).localeCompare(String(b.id)));
@@ -66,20 +66,21 @@ function awards(d,project=false){
  const players=d.Players.map(p=>({...p,rounds:rr.filter(r=>r.player===p.id)}));
  const max=Math.max(0,...players.map(p=>p.rounds.length));const required=finished&&!project&&max<10?9:10;
  const pending=finished&&!project&&max<9;
+ const roundsFirst=project&&!yes(c.seasonClosed);
  const make=(metric,ascending,potKey)=>{
   const rows=players.map(p=>{const kept=[...p.rounds].sort((a,b)=>ascending?a[metric]-b[metric]||a.week-b.week:b[metric]-a[metric]||a.week-b.week).slice(0,required);return {...p,kept,total:sum(kept.map(r=>r[metric])),qualified:project?p.rounds.length>0:p.rounds.length>=required,place:null,prize:null};});
-  rows.sort((a,b)=>Number(b.qualified)-Number(a.qualified)||(ascending?a.total-b.total:b.total-a.total)||a.name.localeCompare(b.name));
+  rows.sort((a,b)=>Number(b.qualified)-Number(a.qualified)||(roundsFirst&&ascending?b.rounds.length-a.rounds.length:0)||(ascending?a.total-b.total:b.total-a.total)||a.name.localeCompare(b.name));
   let position=0,prior=null,place=0;for(const p of rows){if(!p.qualified)continue;position++;if(prior!==p.total)place=position;p.place=place;prior=p.total;}
   const defaults=[80,70,60,50,40],payouts=defaults.map((v,i)=>c[potKey+(i+1)]===undefined?v:number(c[potKey+(i+1)]));
   const valid=payouts.every(v=>Number.isFinite(v)&&v>=0);
-  return {rows,payouts,pot:valid?sum(payouts):null,unallocated:0};
+  return {rows,payouts,pot:valid?sum(payouts):null,unallocated:0,roundsFirst:roundsFirst&&ascending};
  };
  const net=make('net',true,'netPrize'),stableford=make('stableford',false,'stablefordPrize');
  const decisions=[],awaitingChoice=[],unawarded=[];let payoutPending=false;
  function allocate(board){
   board.rows.forEach(p=>{p.place=null;p.prize=null;});
   const eligible=board.rows.filter(p=>p.qualified&&!p.excluded);
-  for(let i=0;i<eligible.length;){let j=i+1;while(j<eligible.length&&eligible[j].total===eligible[i].total)j++;
+  for(let i=0;i<eligible.length;){let j=i+1;while(j<eligible.length&&eligible[j].total===eligible[i].total&&(!board.roundsFirst||eligible[j].rounds.length===eligible[i].rounds.length))j++;
    const cash=sum(board.payouts.slice(i,j))/(j-i);
    for(let k=i;k<j;k++){eligible[k].place=i+1;eligible[k].prize=cash>0?cash:null;}
    i=j;

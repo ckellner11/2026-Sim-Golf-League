@@ -419,3 +419,12 @@ html:not([data-text-size="standard"]) .mobile-scorecard table{table-layout:auto}
 /* Single-column views read chronologically, while desktop fills down columns. */
 .schedule-match-grid:has(.schedule-scorecard[open])>.schedule-match{order:var(--schedule-order)}
 @media(max-width:700px){.schedule-match-grid>.schedule-match{order:var(--schedule-order)}}
+
+/* Combined roster and handicap view. */
+.team-player{padding:18px 0;border-top:1px solid var(--line)}
+.team-player-name{display:flex;align-items:center;justify-content:space-between;gap:16px;font-size:1.15rem}
+.player-handicap{font-size:1.4rem;font-weight:750;font-variant-numeric:tabular-nums}
+.player-history{margin-top:10px}.player-history summary{cursor:pointer;font-size:.95rem;color:var(--muted)}
+.player-history .table-wrap{margin-top:14px}.player-history p{font-size:1rem}
+.scorecard-page-notes{margin-top:32px;border-top:1px solid var(--line);padding:18px 0;color:var(--muted)}
+.scorecard-page-notes summary{cursor:pointer;font-weight:700}.teams-handicaps>.card{min-width:0}

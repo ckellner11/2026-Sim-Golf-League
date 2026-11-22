@@ -14,7 +14,7 @@ function matchLiveTotals(result){
   else {const net=sides.map(rows=>Math.min(...rows.map(r=>r.gross[i]-League.strokes(r.shots,+h.rank))));lead+=net[0]<net[1]?1:net[0]>net[1]?-1:0;if(!finish&&Math.abs(lead)>p.holes.length-i-1)finish={winner:lead>0?'A':'B',label:(p.holes.length-i-1)?Math.abs(lead)+'&'+(p.holes.length-i-1):Math.abs(lead)+' UP'};}
  }
  const label=n=>n>0?n+' UP':n<0?Math.abs(n)+' DN':'AS';
- return {played,decided:!!finish,winner:finish?.winner,label:finish?.label,values:played?(p.format==='STABLEFORD'?totals:finish?['A','B'].map(side=>side===finish.winner?finish.label:'Loss'):[label(lead),label(-lead)]):['—','—']};
+ return {played,decided:!!finish,winner:finish?.winner,label:finish?.label,values:played?(p.format==='STABLEFORD'?totals:finish?['A','B'].map(side=>side===finish.winner?finish.label:''):[label(lead),label(-lead)]):['—','—']};
 }
 function mobileScorecard(p){
  const rounds=[...p.rounds].sort((a,b)=>a.side.localeCompare(b.side));
